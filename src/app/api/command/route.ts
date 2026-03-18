@@ -3,6 +3,8 @@ import { store } from '@/lib/store';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
+export const dynamic = 'force-dynamic';
+
 const execAsync = promisify(exec);
 
 export async function POST(req: Request) {
@@ -19,31 +21,31 @@ export async function POST(req: Request) {
 
     // Simulated detection module for malicious command patterns
     const maliciousPatterns = /[;&|`$\\]|(?:(?:\.\.\/)+)|(?:wget|curl|nc|bash|sh|powershell|cmd)/i;
+    const isDetectionActive = store.isDetectionActive();
 
-    if (maliciousPatterns.test(cmd)) {
+    if (isDetectionActive && maliciousPatterns.test(cmd)) {
       store.addLog({
         type: 'COMMAND_INJECTION',
         message: `Command injection attempt detected: "${cmd}"`,
         ip,
       });
       return NextResponse.json(
-        { error: 'Malicious payload detected and blocked by SecureLockTS.' },
+        { error: 'Malicious payload detected and blocked by SecureLockTS. Try disabling the Sentinel Engine to see the raw vulnerability in action.' },
         { status: 400 }
       );
     }
 
-    // This simulates running a safe, whitelisted command like 'ping' or 'echo'
-    // For demonstration, we'll actually execute it only if it's very simple
-    // BUT IN REALITY, WE JUST ECHO THE INPUT to avoid OS damage during the test.
-    
+    // ACTUAL VULNERABLE EXECUTION
+    // If detection is off, or if it's a safe command, we run it!
     let output = '';
-    if (/^[a-zA-Z0-9\s.\-]+$/.test(cmd)) {
-       // Only execute safely formatted commands for demonstration (e.g., 'echo hello')
+    const isSafe = /^[a-zA-Z0-9\s.\-]+$/.test(cmd);
+
+    if (!isDetectionActive || isSafe) {
        try {
-           const { stdout } = await execAsync(cmd);
-           output = stdout;
+           const { stdout, stderr } = await execAsync(cmd, { timeout: 5000 });
+           output = stdout || stderr || 'Command executed empty result.';
        } catch(e: any) {
-           output = e.message;
+           output = e.stdout || e.stderr || e.message || 'Execution error.';
        }
     } else {
         output = 'Command not permitted or unrecognized.';

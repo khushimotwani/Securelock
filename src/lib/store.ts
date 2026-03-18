@@ -1,5 +1,6 @@
-// In a real app this would be Redis or a database.
-// For demonstration, we use in-memory state.
+import fs from 'fs';
+import path from 'path';
+
 export type LogEntry = {
   id: string;
   type: 'LOGIN_ATTEMPT' | 'SQL_INJECTION' | 'COMMAND_INJECTION' | 'SYSTEM_LOCKDOWN' | 'NORMAL';
@@ -8,25 +9,51 @@ export type LogEntry = {
   ip: string;
 };
 
-class SecurityStore {
-  private logs: LogEntry[] = [];
-  private failCount: number = 0;
-  private isLocked: boolean = false;
-  private readonly LOCKDOWN_THRESHOLD = 3;
+type StoreState = {
+  logs: LogEntry[];
+  failCount: number;
+  isLocked: boolean;
+  isSentinelActive: boolean;
+};
 
+const DB_PATH = path.join(process.cwd(), '.securelock-db.json');
+const LOCKDOWN_THRESHOLD = 3;
+
+function getState(): StoreState {
+  try {
+    if (fs.existsSync(DB_PATH)) {
+      const data = fs.readFileSync(DB_PATH, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (e) {
+    console.error('Error reading DB:', e);
+  }
+  return { logs: [], failCount: 0, isLocked: false, isSentinelActive: true };
+}
+
+function saveState(state: StoreState) {
+  try {
+    fs.writeFileSync(DB_PATH, JSON.stringify(state, null, 2));
+  } catch (e) {
+    console.error('Error writing DB:', e);
+  }
+}
+
+class SecurityStore {
   addLog(log: Omit<LogEntry, 'id' | 'timestamp'>) {
+    const state = getState();
     const entry: LogEntry = {
       ...log,
       id: Math.random().toString(36).substr(2, 9),
       timestamp: new Date().toISOString(),
     };
-    this.logs.unshift(entry);
+    state.logs.unshift(entry);
 
     if (log.type !== 'NORMAL' && log.type !== 'SYSTEM_LOCKDOWN') {
-      this.failCount += 1;
-      if (this.failCount >= this.LOCKDOWN_THRESHOLD && !this.isLocked) {
-        this.isLocked = true;
-        this.logs.unshift({
+      state.failCount += 1;
+      if (state.failCount >= LOCKDOWN_THRESHOLD && !state.isLocked) {
+        state.isLocked = true;
+        state.logs.unshift({
           id: 'lockdown-' + Date.now(),
           type: 'SYSTEM_LOCKDOWN',
           message: 'Threshold exceeded. Automatic system lockdown activated.',
@@ -35,34 +62,41 @@ class SecurityStore {
         });
       }
     }
+    
+    // Keep logs manageable
+    if (state.logs.length > 50) {
+      state.logs = state.logs.slice(0, 50);
+    }
+    
+    saveState(state);
   }
 
   getLogs() {
-    return this.logs;
+    return getState().logs;
   }
 
   isLockedDown() {
-    return this.isLocked;
+    return getState().isLocked;
   }
 
   getFailCount() {
-    return this.failCount;
+    return getState().failCount;
+  }
+
+  isDetectionActive() {
+    return getState().isSentinelActive;
+  }
+
+  toggleSentinel() {
+    const state = getState();
+    state.isSentinelActive = !state.isSentinelActive;
+    saveState(state);
+    return state.isSentinelActive;
   }
 
   reset() {
-    this.logs = [];
-    this.failCount = 0;
-    this.isLocked = false;
+    saveState({ logs: [], failCount: 0, isLocked: false, isSentinelActive: true });
   }
 }
 
-// Global instance
-declare global {
-  var securityStore: SecurityStore | undefined;
-}
-
-export const store = global.securityStore || new SecurityStore();
-
-if (process.env.NODE_ENV !== 'production') {
-  global.securityStore = store;
-}
+export const store = new SecurityStore();
