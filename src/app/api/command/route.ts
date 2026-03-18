@@ -21,18 +21,35 @@ export async function POST(req: Request) {
 
     // Simulated detection module for malicious command patterns
     const maliciousPatterns = /[;&|`$\\]|(?:(?:\.\.\/)+)|(?:wget|curl|nc|bash|sh|powershell|cmd)/i;
+    // Detection module for XSS / Input Validation weaknesses
+    const xssPatterns = /(?:<script.*?>.*?<\/script>)|(?:<.*?on\w+.*?=.*?>)|(?:javascript:)/i;
+    
     const isDetectionActive = store.isDetectionActive();
 
-    if (isDetectionActive && maliciousPatterns.test(cmd)) {
-      store.addLog({
-        type: 'COMMAND_INJECTION',
-        message: `Command injection attempt detected: "${cmd}"`,
-        ip,
-      });
-      return NextResponse.json(
-        { error: 'Malicious payload detected and blocked by SecureLockTS. Try disabling the Sentinel Engine to see the raw vulnerability in action.' },
-        { status: 400 }
-      );
+    if (isDetectionActive) {
+      if (xssPatterns.test(cmd)) {
+        store.addLog({
+          type: 'XSS_INJECTION',
+          message: `Cross-Site Scripting (XSS) payload detected: "${cmd}"`,
+          ip,
+        });
+        return NextResponse.json(
+          { error: 'XSS attack signature detected and blocked by SecureLockTS Sentinel Engine. Input validation enforced.' },
+          { status: 400 }
+        );
+      }
+      
+      if (maliciousPatterns.test(cmd)) {
+        store.addLog({
+          type: 'COMMAND_INJECTION',
+          message: `Command injection attempt detected: "${cmd}"`,
+          ip,
+        });
+        return NextResponse.json(
+          { error: 'Malicious OS payload detected and blocked by SecureLockTS Sentinel Engine. Try disabling the Engine to see the raw vulnerability in action.' },
+          { status: 400 }
+        );
+      }
     }
 
     // ACTUAL VULNERABLE EXECUTION

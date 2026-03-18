@@ -3,7 +3,7 @@ import path from 'path';
 
 export type LogEntry = {
   id: string;
-  type: 'LOGIN_ATTEMPT' | 'SQL_INJECTION' | 'COMMAND_INJECTION' | 'SYSTEM_LOCKDOWN' | 'NORMAL';
+  type: 'LOGIN_ATTEMPT' | 'SQL_INJECTION' | 'COMMAND_INJECTION' | 'XSS_INJECTION' | 'SYSTEM_LOCKDOWN' | 'NORMAL';
   message: string;
   timestamp: string;
   ip: string;
