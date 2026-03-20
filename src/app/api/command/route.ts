@@ -10,31 +10,32 @@ const execAsync = promisify(exec);
 export async function POST(req: Request) {
   if (store.isLockedDown()) {
     return NextResponse.json(
-      { error: 'System is locked down. Requests blocked.' },
+      { error: 'System is locked down. API requests are blocked at the server level (403 Forbidden).' },
       { status: 403 }
     );
   }
 
   try {
-    const { cmd } = await req.json();
+    const { cmd, secureMode = false } = await req.json();
     const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
 
-    // Simulated detection module for malicious command patterns
-    const maliciousPatterns = /[;&|`$\\]|(?:(?:\.\.\/)+)|(?:wget|curl|nc|bash|sh|powershell|cmd)/i;
-    // Detection module for XSS / Input Validation weaknesses
-    const xssPatterns = /(?:<script.*?>.*?<\/script>)|(?:<.*?on\w+.*?=.*?>)|(?:javascript:)/i;
-    
+    // ---------------------------------------------------------------------------------
+    // SERVER-SIDE ATTACK DETECTION (WAF)
+    // ---------------------------------------------------------------------------------
     const isDetectionActive = store.isDetectionActive();
 
     if (isDetectionActive) {
+      const maliciousPatterns = /[;&|`$\\]|(?:(?:\.\.\/)+)|(?:wget|curl|nc|bash|sh|powershell|cmd)/i;
+      const xssPatterns = /(?:<script.*?>.*?<\/script>)|(?:<.*?on\w+.*?=.*?>)|(?:javascript:)/i;
+      
       if (xssPatterns.test(cmd)) {
         store.addLog({
           type: 'XSS_INJECTION',
-          message: `Cross-Site Scripting (XSS) payload detected: "${cmd}"`,
+          message: `Sentinel intercepted XSS payload: "${cmd}"`,
           ip,
         });
         return NextResponse.json(
-          { error: 'XSS attack signature detected and blocked by SecureLockTS Sentinel Engine. Input validation enforced.' },
+          { error: 'XSS attack signature detected and blocked by Sentinel Engine.' },
           { status: 400 }
         );
       }
@@ -42,35 +43,57 @@ export async function POST(req: Request) {
       if (maliciousPatterns.test(cmd)) {
         store.addLog({
           type: 'COMMAND_INJECTION',
-          message: `Command injection attempt detected: "${cmd}"`,
+          message: `Sentinel intercepted Command injection attempt: "${cmd}"`,
           ip,
         });
         return NextResponse.json(
-          { error: 'Malicious OS payload detected and blocked by SecureLockTS Sentinel Engine. Try disabling the Engine to see the raw vulnerability in action.' },
+          { error: 'Malicious OS payload detected and blocked by Sentinel Engine.' },
           { status: 400 }
         );
       }
     }
 
-    // ACTUAL VULNERABLE EXECUTION
-    // If detection is off, or if it's a safe command, we run it!
+    // ---------------------------------------------------------------------------------
+    // COMMAND EXECUTION
+    // ---------------------------------------------------------------------------------
     let output = '';
-    const isSafe = /^[a-zA-Z0-9\s.\-]+$/.test(cmd);
 
-    if (!isDetectionActive || isSafe) {
-       try {
-           const { stdout, stderr } = await execAsync(cmd, { timeout: 5000 });
-           output = stdout || stderr || 'Command executed empty result.';
-       } catch(e: any) {
-           output = e.stdout || e.stderr || e.message || 'Execution error.';
-       }
+    if (secureMode) {
+      // SECURE IMPLEMENTATION (For Report Comparison)
+      // Strictly validates that only certain commands with alphanumeric arguments run.
+      // E.g. allowing ONLY "ping" command.
+      const isPingSafe = /^ping\s+[a-zA-Z0-9.\-]+$/.test(cmd);
+      if (isPingSafe) {
+        try {
+          // You could also use execFile('ping', [arg]) for further security
+          const { stdout, stderr } = await execAsync(cmd, { timeout: 5000 });
+          output = stdout || stderr || 'Command executed empty result.';
+        } catch (e: unknown) {
+          const err = e as Error;
+          const sysErr = e as {stdout?: string, stderr?: string};
+          output = sysErr.stdout || sysErr.stderr || err.message || 'Execution error.';
+        }
+      } else {
+        output = 'Strict Execution Policy: Only alphanumeric ping arguments permitted in SecureMode.';
+      }
     } else {
-        output = 'Command not permitted or unrecognized.';
+      // VULNERABLE IMPLEMENTATION (Default)
+      // Directly passes unfiltered user input to the shell engine.
+      // CWE-78: Improper Neutralization of Special Elements used in an OS Command
+      try {
+        const { stdout, stderr } = await execAsync(cmd, { timeout: 5000 });
+        output = stdout || stderr || 'Command executed empty result.';
+      } catch (e: unknown) {
+        // Relaying exact raw OS errors, proving real local execution!
+        const err = e as Error;
+        const sysErr = e as {stdout?: string, stderr?: string};
+        output = sysErr.stdout || sysErr.stderr || err.message;
+      }
     }
 
     store.addLog({
       type: 'NORMAL',
-      message: `Executed command safely: "${cmd}"`,
+      message: `Executed OS command: "${cmd.substring(0, 50)}${cmd.length > 50 ? '...' : ''}"`,
       ip,
     });
 
