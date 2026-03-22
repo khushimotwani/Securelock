@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SecureLockTS
+
+**A Self-Lockdown Application for Real-Time Attack Detection and Automated System Protection**
+
+*Khushi, Taiba, Heer*
+
+---
+
+## Overview
+
+SecureLockTS is a TypeScript web application built with Next.js that demonstrates how proactive, built-in security mechanisms can detect and respond to cyberattacks in real time. The application intentionally includes controlled vulnerabilities (SQL Injection, OS Command Injection, and Cross-Site Scripting) alongside an AI-powered Sentinel detection engine that monitors input patterns and automatically locks down the system when attack thresholds are breached.
+
+## Architecture
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Framework** | Next.js 16 + TypeScript (strict mode) | Full-stack web application with API routes |
+| **Database** | SQLite (via `sqlite3`) | Stores user credentials for auth demo |
+| **AI Detection** | Google Gemini API (`gemini-2.5-flash`) | Analyzes payloads for malicious intent in real time |
+| **State Management** | JSON file store (`.securelock-db.json`) | Tracks logs, anomaly count, lockdown state, rate limits, and IP bans |
+| **Static Analysis** | ESLint + `eslint-plugin-security`, TypeScript strict mode | Identifies unsafe coding patterns at build time |
+| **Security Headers** | Next.js config (CSP, HSTS, X-Frame-Options, etc.) | Defense-in-depth HTTP hardening |
+
+## Target Vulnerabilities
+
+| # | Vulnerability | CWE | Endpoint | Description |
+|---|---|---|---|---|
+| 1 | **SQL Injection** | CWE-89 | `/api/auth` | User input is concatenated directly into SQL queries when `secureMode` is off |
+| 2 | **OS Command Injection** | CWE-78 | `/api/command` | User input is passed directly to `child_process.exec()` when `secureMode` is off |
+| 3 | **Reflected XSS** | CWE-79 | `/api/xss` | User-supplied HTML is returned unescaped when `secureMode` is off |
+
+Each vulnerability has a **secure mode** toggle that demonstrates the proper remediation (parameterized queries, input validation, HTML escaping).
+
+## Defensive Mechanisms
+
+- **Sentinel AI Engine** — LLM-powered payload analysis via Google Gemini with automatic regex fallback when API is unavailable
+- **WAF Middleware** — HTTP verb filtering, URL encoding validation, payload size constraints
+- **Rate Limiting** — Sliding-window IP-based rate limiter (15 req/10s) to prevent brute-force and DDoS
+- **Automatic Lockdown** — After 3 anomalies, all API endpoints return `403 Forbidden`
+- **Tarpit Defense** — Malicious requests are artificially delayed by 5 seconds to exhaust attacker resources
+- **IP Banning & Rickroll Redirect** — Banned IPs are redirected to a YouTube rickroll
+- **Honeypot Endpoint** — `/api/admin/dump` streams infinite junk JSON to crash attacker tools
+- **Security Headers** — CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+
+## Pages
+
+| Route | Description |
+|---|---|
+| `/` | Corporate dashboard (decoy frontend) |
+| `/login` | Authentication page — test SQL injection here |
+| `/test-injection` | Command execution terminal — test OS command injection here |
+| `/xss-test` | XSS lab — test reflected cross-site scripting here |
+| `/sentinel` | Real-time security monitoring dashboard with live syslog feed |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+ or Bun
+- (Optional) A Google Gemini API key for AI-powered detection
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-repo/Securelock.git
+cd Securelock
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Running
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Start the development server
+npm run dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Open http://localhost:3000
+```
 
-## Learn More
+To enable AI-powered detection, set the Gemini API key:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+GEMINI_API_KEY=your_key_here npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Running the Test Bench
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+With the dev server running in another terminal:
 
-## Deploy on Vercel
+```bash
+# Full verification test bench (all security mechanisms)
+node test_bench.mjs
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Individual test scripts
+node run_tests.mjs           # Sequential attack simulation
+node run_rate_limit_test.mjs  # DDoS/brute-force stress test
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Static Analysis
+
+```bash
+# Run ESLint with security plugin
+npm run lint
+
+# Generate JSON report
+npx eslint src/ --format json -o eslint-report.json
+```
+
+## Static Analysis Tools
+
+- **ESLint + `eslint-plugin-security`** — Detects unsafe regex, `eval()` usage, non-literal `exec()` calls, and other security anti-patterns
+- **TypeScript Strict Mode** — Enforces strict type checking, eliminating `any` type leaks and ensuring safe error handling
+- **SonarQube** (configured via `sonar-project.properties`) — Advanced SAST including taint analysis for injection tracking
+
+## References
+
+- OWASP Foundation. (2025). *OWASP Top 10:2025*. https://owasp.org/Top10/
+- Bathgate, R. (2026). *The vast majority of breaches are enabled by preventable gaps*. IT Pro.
+- Kobie, N. (2025). *74% of companies admit insecure code caused a security breach*. IT Pro.
+- SonarSource. (2025). *Advanced code security tool for developers*. https://www.sonarsource.com/solutions/security/

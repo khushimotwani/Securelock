@@ -4,12 +4,7 @@ import { store } from '@/lib/store';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return NextResponse.json({
-    isLockedDown: store.isLockedDown(),
-    failCount: store.getFailCount(),
-    isSentinelActive: store.isDetectionActive(),
-    logs: store.getLogs(),
-  });
+  return NextResponse.json(store.getFullStatus());
 }
 
 // Global memory resets (for testing)

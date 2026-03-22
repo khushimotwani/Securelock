@@ -1,149 +1,129 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, ShieldAlert, KeyRound, User, Lock, Activity, Cloud } from "lucide-react";
+import { Shield, LogIn, ShieldAlert, CheckCircle } from "lucide-react";
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [status, setStatus] = useState('');
+  const [isError, setIsError] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsAuthenticating(true);
-    setMessage('');
-    
-    // Fake typing/processing delay for awesome hacky feel
-    setTimeout(async () => {
-      try {
-        const res = await fetch('/api/auth', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username, password }),
-        });
-        
-        const data = await res.json();
-        if (res.ok) {
-          setMessage(data.message);
-        } else {
-          setMessage(data.error);
+    setIsSubmitting(true);
+    setStatus('');
+    setIsError(false);
+    setIsSuccess(false);
+
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsSuccess(true);
+        setStatus(data.message || 'Login successful');
+        if (username === 'admin') {
+          sessionStorage.setItem('securelock-admin', 'true');
         }
-      } catch (e) {
-        setMessage('Network error or system locked.');
-      } finally {
-        setIsAuthenticating(false);
+        setTimeout(() => window.location.href = '/sentinel', 1000);
+      } else {
+        setIsError(true);
+        setStatus(data.error || 'Authentication failed.');
       }
-    }, 600);
+    } catch {
+      setIsError(true);
+      setStatus('Network error. Service may be unavailable.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 font-sans">
-      
-      {/* Background glow effects */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none -z-10"></div>
-      
-      <div className="w-full max-w-[420px]">
-        
-        <Card className="glass-panel overflow-hidden relative w-full border-slate-700/50 bg-slate-900/60 shadow-2xl shadow-indigo-500/10">
-          
-          <CardHeader className="border-b border-slate-800 pb-8 pt-10 text-center">
-            <div className="mx-auto w-12 h-12 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mb-6 shadow-lg shadow-indigo-500/20">
-              <Cloud className="w-6 h-6 text-white" />
-            </div>
-            <CardTitle className="text-2xl font-semibold text-white tracking-tight">
-              Sign in to The Securelock
-            </CardTitle>
-            <CardDescription className="text-slate-400 text-sm mt-2">
-              Welcome back. Enter your credentials to access the enterprise gateway.
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="pt-8 px-8">
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                  Corporate ID
-                </label>
-                <Input
-                  type="text"
-                  className="bg-slate-950/50 border-slate-700 text-white h-11 focus-visible:ring-indigo-500 focus-visible:ring-offset-0 placeholder:text-slate-600 transition-all text-sm"
-                  placeholder="name@company.com"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-slate-300">
-                    Password
-                  </label>
-                  <span className="text-xs text-indigo-400 hover:text-indigo-300 cursor-pointer">Forgot password?</span>
-                </div>
-                <Input
-                  type="password"
-                  className="bg-slate-950/50 border-slate-700 text-white h-11 focus-visible:ring-indigo-500 focus-visible:ring-offset-0 placeholder:text-slate-600 transition-all text-sm tracking-widest"
-                  placeholder="••••••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <Button
-                type="submit"
-                disabled={isAuthenticating}
-                className="w-full mt-4 h-11 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg flex items-center justify-center gap-2"
-              >
-                {isAuthenticating ? (
-                  <>
-                    <Lock className="h-4 w-4 animate-spin opacity-70" /> Verifying...
-                  </>
-                ) : (
-                  'Continue securely'
-                )}
-              </Button>
-              
-              <div className="relative flex items-center justify-center py-4">
-                 <div className="absolute border-t border-slate-800 w-full"></div>
-                 <span className="bg-slate-900 px-3 text-xs text-slate-500 relative z-10">Or continue with</span>
-              </div>
-              
-              <Button type="button" variant="outline" className="w-full h-11 bg-transparent border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
-                Single Sign-On (SAML)
-              </Button>
-            </form>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] py-10 px-4">
+      <Card className="w-full max-w-md border-gray-200 bg-white shadow-lg rounded-sm overflow-hidden">
+        <CardHeader className="border-b border-gray-200 pb-5 pt-8 bg-[hsl(213,62%,22%)] text-center">
+          <div className="w-14 h-14 mx-auto mb-4 rounded bg-white/10 flex items-center justify-center">
+            <Shield className="h-7 w-7 text-white" />
+          </div>
+          <CardTitle className="text-xl font-bold text-white" style={{ fontFamily: 'Merriweather, Georgia, serif' }}>
+            Administrator Sign In
+          </CardTitle>
+          <CardDescription className="text-blue-100/60 text-sm mt-1">
+            Authorized personnel only. All attempts are logged.
+          </CardDescription>
+        </CardHeader>
 
-            {message && (
-              <div className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <Alert className={`border ${message.includes('Invalid') || message.includes('locked') || message.includes('error') ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
-                  <ShieldAlert className={`h-4 w-4 mt-0.5 ${message.includes('Invalid') || message.includes('locked') || message.includes('error') ? 'stroke-red-400' : 'stroke-emerald-400'}`} />
-                  <div className="pl-2">
-                    <AlertTitle className="font-semibold text-sm mb-1">Status</AlertTitle>
-                    <AlertDescription className="text-xs leading-relaxed opacity-90">
-                      {message}
-                    </AlertDescription>
-                  </div>
+        <CardContent className="pt-8 px-8 pb-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-gray-700">Username</label>
+              <Input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="bg-white border-gray-300 text-gray-800 h-11 rounded-sm focus-visible:ring-blue-700 placeholder:text-gray-400"
+                placeholder="admin"
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-gray-700">Password</label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-white border-gray-300 text-gray-800 h-11 rounded-sm focus-visible:ring-blue-700 placeholder:text-gray-400"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-11 bg-[hsl(213,62%,22%)] text-white hover:bg-[hsl(213,62%,28%)] transition-all font-semibold rounded-sm"
+            >
+              {isSubmitting ? 'Authenticating...' : (
+                <span className="flex items-center gap-2">
+                  <LogIn className="w-4 h-4" /> Sign In
+                </span>
+              )}
+            </Button>
+          </form>
+
+          {status && (
+            <div className="mt-6">
+              {isSuccess ? (
+                <Alert className="bg-emerald-50 border-emerald-300 text-emerald-800 rounded-sm">
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertTitle className="text-xs font-bold">Access Granted</AlertTitle>
+                  <AlertDescription className="text-sm">Redirecting to Sentinel Core...</AlertDescription>
                 </Alert>
-              </div>
-            )}
-          </CardContent>
-          
-          <CardFooter className="flex justify-center border-t border-slate-800 py-6 bg-slate-950/30">
-             <p className="text-xs text-slate-500 text-center">
-               Protected by The Securelock Advanced Threat Analytics<br/>
-               <span className="opacity-50">IP Logged for Corporate Compliance</span>
-             </p>
-          </CardFooter>
-        </Card>
-      </div>
+              ) : isError ? (
+                <Alert className="bg-red-50 border-red-300 text-red-800 rounded-sm">
+                  <ShieldAlert className="h-4 w-4" />
+                  <AlertTitle className="text-xs font-bold">Access Denied</AlertTitle>
+                  <AlertDescription className="text-sm">{status}</AlertDescription>
+                </Alert>
+              ) : null}
+            </div>
+          )}
+
+          <p className="text-[11px] text-gray-400 text-center mt-6">
+            This portal is for blog administrators only. Unauthorized access attempts are monitored.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
