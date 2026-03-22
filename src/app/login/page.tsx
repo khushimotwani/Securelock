@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, ShieldAlert, KeyRound, User, Lock, Activity } from "lucide-react";
+import { Terminal, ShieldAlert, KeyRound, User, Lock, Activity, Cloud } from "lucide-react";
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -44,96 +44,90 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
-      <div className="w-full max-w-md relative group">
+    <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 font-sans">
+      
+      {/* Background glow effects */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+      
+      <div className="w-full max-w-[420px]">
         
-        {/* Decorative corner accents */}
-        <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-primary z-10 transition-all duration-500 group-hover:w-8 group-hover:h-8"></div>
-        <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-primary z-10 transition-all duration-500 group-hover:w-8 group-hover:h-8"></div>
-        <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-primary z-10 transition-all duration-500 group-hover:w-8 group-hover:h-8"></div>
-        <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-primary z-10 transition-all duration-500 group-hover:w-8 group-hover:h-8"></div>
-
-        <Card className="glass-panel overflow-hidden relative w-full border-primary/40 pt-2">
+        <Card className="glass-panel overflow-hidden relative w-full border-slate-700/50 bg-slate-900/60 shadow-2xl shadow-indigo-500/10">
           
-          {/* Animated top stripe */}
-          <div className="absolute top-0 left-0 h-1 w-full bg-primary/20">
-             <div className="h-full bg-primary w-1/3 animate-pulse shadow-[0_0_10px_#00ff00]"></div>
-          </div>
-
-          <CardHeader className="border-b border-primary/20 pb-6 pt-8">
-            <div className="flex items-center justify-between mb-2">
-              <CardTitle className="text-2xl font-bold text-primary neon-text uppercase tracking-widest flex items-center gap-3">
-                <Terminal className="h-6 w-6" /> ROOT_LOGIN
-              </CardTitle>
-              <div className="px-2 py-1 bg-primary/10 border border-primary/30 rounded text-[10px] uppercase tracking-widest animate-pulse flex items-center gap-2">
-                <Activity className="w-3 h-3" /> Node Active
-              </div>
+          <CardHeader className="border-b border-slate-800 pb-8 pt-10 text-center">
+            <div className="mx-auto w-12 h-12 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mb-6 shadow-lg shadow-indigo-500/20">
+              <Cloud className="w-6 h-6 text-white" />
             </div>
-            <CardDescription className="text-primary/60 font-mono uppercase text-xs tracking-wider">
-              Authenticate via SecureLockTS Sentinel Protocol
+            <CardTitle className="text-2xl font-semibold text-white tracking-tight">
+              Sign in to The Securelock
+            </CardTitle>
+            <CardDescription className="text-slate-400 text-sm mt-2">
+              Welcome back. Enter your credentials to access the enterprise gateway.
             </CardDescription>
           </CardHeader>
           
-          <CardContent className="pt-8">
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div className="space-y-3">
-                <label className="text-xs font-bold font-mono text-primary/80 uppercase flex items-center gap-2 tracking-widest">
-                  <User className="h-4 w-4" /> Identification
+          <CardContent className="pt-8 px-8">
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                  Corporate ID
                 </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-primary/50 text-sm">{'>'}</span>
-                  <Input
-                    type="text"
-                    className="bg-black/80 border-primary/40 text-primary h-12 pl-8 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:border-primary font-mono placeholder:text-primary/20 transition-all shadow-[inset_0_0_10px_rgba(0,255,0,0.05)]"
-                    placeholder="ENTER_USERNAME"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
-                </div>
+                <Input
+                  type="text"
+                  className="bg-slate-950/50 border-slate-700 text-white h-11 focus-visible:ring-indigo-500 focus-visible:ring-offset-0 placeholder:text-slate-600 transition-all text-sm"
+                  placeholder="name@company.com"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
               </div>
-              <div className="space-y-3">
-                <label className="text-xs font-bold font-mono text-primary/80 uppercase flex items-center gap-2 tracking-widest">
-                  <KeyRound className="h-4 w-4" /> Passcode
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-primary/50 text-sm">***</span>
-                  <Input
-                    type="password"
-                    className="bg-black/80 border-primary/40 text-primary h-12 pl-10 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:border-primary font-mono placeholder:text-primary/20 transition-all shadow-[inset_0_0_10px_rgba(0,255,0,0.05)]"
-                    placeholder="ENTER_PASSCODE"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-300">
+                    Password
+                  </label>
+                  <span className="text-xs text-indigo-400 hover:text-indigo-300 cursor-pointer">Forgot password?</span>
                 </div>
+                <Input
+                  type="password"
+                  className="bg-slate-950/50 border-slate-700 text-white h-11 focus-visible:ring-indigo-500 focus-visible:ring-offset-0 placeholder:text-slate-600 transition-all text-sm tracking-widest"
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
               </div>
               
               <Button
                 type="submit"
                 disabled={isAuthenticating}
-                className="w-full mt-2 h-12 font-mono font-bold uppercase tracking-[0.2em] bg-primary/10 text-primary hover:bg-primary/30 border border-primary/60 transition-all group-hover:neon-border flex items-center justify-center gap-2 relative overflow-hidden"
+                className="w-full mt-4 h-11 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg flex items-center justify-center gap-2"
               >
                 {isAuthenticating ? (
                   <>
-                    <Lock className="h-4 w-4 animate-spin opacity-50" /> Authenticating...
+                    <Lock className="h-4 w-4 animate-spin opacity-70" /> Verifying...
                   </>
                 ) : (
-                  <>
-                    <Lock className="h-4 w-4" /> Initialize Access
-                  </>
+                  'Continue securely'
                 )}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent -translate-x-full hover:animate-[shimmer_1.5s_infinite]"></div>
+              </Button>
+              
+              <div className="relative flex items-center justify-center py-4">
+                 <div className="absolute border-t border-slate-800 w-full"></div>
+                 <span className="bg-slate-900 px-3 text-xs text-slate-500 relative z-10">Or continue with</span>
+              </div>
+              
+              <Button type="button" variant="outline" className="w-full h-11 bg-transparent border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
+                Single Sign-On (SAML)
               </Button>
             </form>
 
             {message && (
-              <div className="mt-6">
-                <Alert className={`border ${message.includes('Invalid') || message.includes('locked') || message.includes('error') ? 'bg-destructive/10 border-destructive/50 text-destructive shadow-[0_0_15px_rgba(255,0,0,0.2)]' : 'bg-primary/10 border-primary/50 text-primary neon-border flex items-start'}`}>
-                  <ShieldAlert className={`h-5 w-5 mt-0.5 ${message.includes('Invalid') || message.includes('locked') || message.includes('error') ? 'stroke-destructive' : 'stroke-primary'}`} />
+              <div className="mt-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <Alert className={`border ${message.includes('Invalid') || message.includes('locked') || message.includes('error') ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
+                  <ShieldAlert className={`h-4 w-4 mt-0.5 ${message.includes('Invalid') || message.includes('locked') || message.includes('error') ? 'stroke-red-400' : 'stroke-emerald-400'}`} />
                   <div className="pl-2">
-                    <AlertTitle className="font-mono uppercase tracking-widest font-bold text-xs mb-1">Authorization Event</AlertTitle>
-                    <AlertDescription className="font-mono text-xs leading-relaxed">
+                    <AlertTitle className="font-semibold text-sm mb-1">Status</AlertTitle>
+                    <AlertDescription className="text-xs leading-relaxed opacity-90">
                       {message}
                     </AlertDescription>
                   </div>
@@ -142,20 +136,11 @@ export default function LoginPage() {
             )}
           </CardContent>
           
-          <CardFooter className="flex flex-col items-start border-t border-primary/20 pt-5 pb-6 bg-black/40 mt-2">
-            <p className="font-bold mb-3 text-primary uppercase tracking-widest text-[10px] flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span> Threat Vectors Detected:
-            </p>
-            <ul className="space-y-3 w-full">
-              <li className="bg-primary/5 border border-primary/20 p-2 rounded text-xs text-primary/70 font-mono">
-                <span className="text-primary font-bold uppercase">Brute-Force</span>
-                <p className="mt-1 opacity-80">Repeatedly login with invalid passwords to trigger lockdown.</p>
-              </li>
-              <li className="bg-primary/5 border border-primary/20 p-2 rounded text-xs text-primary/70 font-mono">
-                <span className="text-primary font-bold uppercase">SQLi Bypass</span>
-                <p className="mt-1 opacity-80">Try <code className="bg-black text-primary px-1.5 py-0.5 rounded border border-primary/30 mx-1">admin'--</code> or <code className="bg-black text-primary px-1.5 py-0.5 rounded border border-primary/30 mx-1">' OR 1=1;</code></p>
-              </li>
-            </ul>
+          <CardFooter className="flex justify-center border-t border-slate-800 py-6 bg-slate-950/30">
+             <p className="text-xs text-slate-500 text-center">
+               Protected by The Securelock Advanced Threat Analytics<br/>
+               <span className="opacity-50">IP Logged for Corporate Compliance</span>
+             </p>
           </CardFooter>
         </Card>
       </div>

@@ -47,43 +47,43 @@ export default function InjectionTestPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-10 px-4">
-      <Card className="glass-panel w-full max-w-3xl border-primary/40 relative overflow-hidden group">
+    <div className="flex flex-col items-center justify-center py-10 px-4 font-sans">
+      <Card className="glass-panel w-full max-w-3xl border-slate-700/50 relative overflow-hidden group bg-slate-900/60 shadow-2xl">
         
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -z-10 group-hover:bg-primary/10 transition-colors duration-1000"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-[80px] -z-10 group-hover:bg-indigo-500/10 transition-colors duration-1000"></div>
 
-        <CardHeader className="border-b border-primary/20 pb-5 pt-8 bg-black/40">
+        <CardHeader className="border-b border-slate-800 pb-5 pt-8 bg-slate-950/40">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl font-bold text-primary neon-text uppercase tracking-widest flex items-center gap-3">
-              <TerminalSquare className="h-7 w-7" /> INJECTION_SIMULATOR
+            <CardTitle className="text-xl font-semibold text-slate-100 tracking-tight flex items-center gap-3">
+              <TerminalSquare className="h-6 w-6 text-indigo-400" /> Enterprise Diagnostics
             </CardTitle>
-            <div className="flex gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-500/50 border border-red-500"></span>
-              <span className="w-3 h-3 rounded-full bg-yellow-500/50 border border-yellow-500"></span>
-              <span className="w-3 h-3 rounded-full bg-primary/50 border border-primary"></span>
+            <div className="flex gap-2 opacity-60">
+              <span className="w-3 h-3 rounded-full bg-slate-600"></span>
+              <span className="w-3 h-3 rounded-full bg-slate-600"></span>
+              <span className="w-3 h-3 rounded-full bg-slate-600"></span>
             </div>
           </div>
-          <CardDescription className="text-primary/60 font-mono text-xs mt-3 tracking-widest uppercase">
-            System Utility Diagnostic Node. Awaiting operator input...
+          <CardDescription className="text-slate-400 text-sm mt-3">
+            Secure SSH Tunnel configured for root diagnostic tracing. Authorized users only.
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="pt-8">
+        <CardContent className="pt-8 px-8">
           <form onSubmit={handleExecute} className="space-y-4">
             <div className="space-y-3">
-              <label className="text-xs font-bold font-mono text-primary/80 uppercase tracking-widest flex items-center gap-2">
-                <Code className="w-4 h-4" /> Root Execution Environment
+              <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                <Code className="w-4 h-4 text-indigo-400" /> System Command Query
               </label>
               
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1 group/input">
-                  <div className="absolute left-0 top-0 bottom-0 w-12 bg-primary/10 border-r border-primary/30 flex items-center justify-center text-primary font-bold z-10 rounded-l-md font-mono">
+                  <div className="absolute left-0 top-0 bottom-0 w-12 bg-slate-800/80 border-r border-slate-700 flex items-center justify-center text-slate-400 z-10 rounded-l-md font-mono">
                     <FileTerminal className="w-4 h-4" />
                   </div>
                   <Input
                     type="text"
-                    className="bg-black/80 border-primary/40 text-primary h-14 pl-16 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:border-primary font-mono placeholder:text-primary/20 transition-all text-sm rounded-md shadow-[inset_0_0_15px_rgba(0,255,0,0.05)]"
-                    placeholder="Enter command or injection payload..."
+                    className="bg-slate-950/50 border-slate-700 text-slate-200 h-12 pl-16 focus-visible:ring-indigo-500 focus-visible:ring-offset-0 font-mono placeholder:text-slate-600 transition-all text-sm rounded-md shadow-inner"
+                    placeholder="E.g. ping 10.0.0.1 -c 4"
                     value={cmd}
                     onChange={(e) => setCmd(e.target.value)}
                     required
@@ -93,11 +93,11 @@ export default function InjectionTestPage() {
                 <Button
                   type="submit"
                   disabled={isExecuting}
-                  className="h-14 px-8 font-mono font-bold uppercase tracking-widest bg-primary/15 text-primary hover:bg-primary/30 border border-primary/50 transition-all sm:w-auto w-full group/btn"
+                  className="h-12 px-6 font-medium bg-indigo-600 text-white hover:bg-indigo-500 transition-all sm:w-auto w-full group/btn shadow-lg"
                 >
-                  {isExecuting ? 'Processing...' : (
+                  {isExecuting ? 'Tracing...' : (
                     <span className="flex items-center gap-2">
-                      Execute <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      Run Trace <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                     </span>
                   )}
                 </Button>
@@ -107,20 +107,19 @@ export default function InjectionTestPage() {
 
           {(result || errorMsg) && (
             <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <Alert className={`border relative overflow-hidden flex items-start gap-4 ${errorMsg ? 'bg-[#1a0505] border-destructive/50 text-destructive shadow-[0_0_20px_rgba(255,0,0,0.15)]' : 'bg-[#001000] border-primary/50 text-primary/90 shadow-[0_0_20px_rgba(0,255,0,0.1)]'}`}>
+              <Alert className={`border relative overflow-hidden flex items-start gap-4 ${errorMsg ? 'bg-red-950/30 border-red-500/30 text-red-400' : 'bg-slate-900 border-slate-700 text-slate-300'}`}>
                 
-                {/* Decorative side bar for alert */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1 ${errorMsg ? 'bg-destructive' : 'bg-primary'}`}></div>
+                <div className={`absolute left-0 top-0 bottom-0 w-1 ${errorMsg ? 'bg-red-500' : 'bg-slate-500'}`}></div>
                 
-                <div className={`p-2 rounded bg-black/50 border ${errorMsg ? 'border-destructive/30' : 'border-primary/30'}`}>
-                   <BugPlay className={`h-5 w-5 ${errorMsg ? 'stroke-destructive' : 'stroke-primary'}`} />
+                <div className={`p-2 rounded bg-black/40 border ${errorMsg ? 'border-red-500/20' : 'border-slate-700'}`}>
+                   <BugPlay className={`h-5 w-5 ${errorMsg ? 'stroke-red-400' : 'stroke-slate-400'}`} />
                 </div>
                 
                 <div className="flex-1">
-                  <AlertTitle className="font-mono uppercase tracking-[0.2em] text-[10px] font-bold border-b border-[inherit] pb-2 mb-3 opacity-70">
-                    {errorMsg ? '[! SECURITY EXCEPTION !]' : '--- STANDARD OUTPUT ---'}
+                  <AlertTitle className="text-xs font-semibold mb-2 opacity-70">
+                    {errorMsg ? 'System Exception' : 'Trace Output'}
                   </AlertTitle>
-                  <AlertDescription className="font-mono whitespace-pre-wrap mt-2 overflow-x-auto text-sm leading-relaxed tracking-wide min-h-[60px]">
+                  <AlertDescription className="font-mono whitespace-pre-wrap mt-1 overflow-x-auto text-[13px] leading-relaxed min-h-[60px] max-h-64 overflow-y-auto">
                     {errorMsg || result}
                   </AlertDescription>
                 </div>
@@ -129,30 +128,30 @@ export default function InjectionTestPage() {
           )}
         </CardContent>
 
-        <CardFooter className="flex flex-col items-start border-t border-primary/20 pt-6 mt-4 bg-black/40">
-          <p className="font-bold mb-4 uppercase text-primary tracking-[0.2em] text-[10px] flex items-center gap-2">
-             <span className="w-1.5 h-1.5 bg-primary rotate-45"></span> Exploit Arsenal
+        <CardFooter className="flex flex-col items-start border-t border-slate-800 pt-6 mt-4 bg-slate-950/40">
+          <p className="font-medium mb-4 text-slate-400 text-xs flex items-center gap-2">
+             Recent Commands List
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full opacity-80 text-xs font-mono text-primary/70">
-            <button type="button" onClick={() => handleQuickInject('ping 127.0.0.1 && whoami')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
-              <span><code>ping && whoami</code></span>
-              <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full text-xs font-mono text-slate-400">
+            <button type="button" onClick={() => handleQuickInject('ping 127.0.0.1')} className="text-left bg-slate-900 border border-slate-800 px-3 py-2 rounded hover:bg-slate-800 hover:border-slate-700 hover:text-white transition-colors flex items-center justify-between group/cmd">
+              <span><code>ping localhost</code></span>
+              <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity text-indigo-400" />
             </button>
-            <button type="button" onClick={() => handleQuickInject('echo Hack >> output.txt | dir')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
-              <span><code>echo | dir</code></span>
-              <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity" />
+            <button type="button" onClick={() => handleQuickInject('whoami')} className="text-left bg-slate-900 border border-slate-800 px-3 py-2 rounded hover:bg-slate-800 hover:border-slate-700 hover:text-white transition-colors flex items-center justify-between group/cmd">
+              <span><code>whoami (check auth)</code></span>
+              <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity text-indigo-400" />
             </button>
-            <button type="button" onClick={() => handleQuickInject('<script>alert("hacked")</script>')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
-              <span><code>&lt;script&gt;alert(1)&lt;/script&gt;</code></span>
-              <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity" />
+            <button type="button" onClick={() => handleQuickInject('ls -la')} className="text-left bg-slate-900 border border-slate-800 px-3 py-2 rounded hover:bg-slate-800 hover:border-slate-700 hover:text-white transition-colors flex items-center justify-between group/cmd">
+              <span><code>ls -la (directory)</code></span>
+              <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity text-indigo-400" />
             </button>
-            <button type="button" onClick={() => handleQuickInject('<img src=x onerror=alert(1)>')} className="text-left bg-primary/5 border border-primary/20 px-3 py-2 rounded hover:bg-primary/10 hover:border-primary/40 transition-colors flex items-center justify-between group/cmd">
-              <span><code>&lt;img src=x onerror=...&gt;</code></span>
-              <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity" />
+            <button type="button" onClick={() => handleQuickInject('cat /etc/os-release')} className="text-left bg-slate-900 border border-slate-800 px-3 py-2 rounded hover:bg-slate-800 hover:border-slate-700 hover:text-white transition-colors flex items-center justify-between group/cmd">
+              <span><code>cat system-info.txt</code></span>
+              <ArrowRight className="w-3 h-3 opacity-0 group-hover/cmd:opacity-100 transition-opacity text-indigo-400" />
             </button>
           </div>
-          <p className="mt-5 text-[10px] text-primary/40 font-mono tracking-widest uppercase text-center w-full">
-            Any attempt to execute shell metacharacters or inject malicious scripts will trigger automated containment.
+          <p className="mt-5 text-[11px] text-slate-500 font-sans text-center w-full">
+            All administrative traces are continuously logged by the Enterprise Sentinel.
           </p>
         </CardFooter>
       </Card>

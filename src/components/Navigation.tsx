@@ -1,5 +1,5 @@
 'use client';
-import { Lock, Shield, ShieldOff } from 'lucide-react';
+import { Lock, Shield, ShieldOff, Cloud, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -43,39 +43,40 @@ export default function Navigation() {
   };
 
   const links = [
-    { label: 'Dashboard', href: '/' },
-    { label: 'Login', href: '/login' },
-    { label: 'Injection Test', href: '/test-injection' },
+    { label: 'Overview', href: '/' },
+    { label: 'Cloud Gateway', href: '/login' },
+    { label: 'Diagnostics', href: '/test-injection' },
+    { label: 'Sentinel Core', href: '/sentinel' },
   ];
 
   return (
-    <nav className="glass-panel sticky top-0 z-50 transition-colors border-b border-primary/20 bg-black/80">
+    <nav className="glass-panel sticky top-0 z-50 transition-colors border-b border-white/5 bg-slate-900/60 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0 flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded bg-primary/10 border border-primary/40 flex items-center justify-center group-hover:neon-border transition-all">
-              <span className="text-primary font-bold text-lg select-none">&gt;_</span>
+            <div className="w-8 h-8 rounded-lg bg-indigo-500 box-shadow-[0_0_20px_rgba(99,102,241,0.5)] flex items-center justify-center transition-all">
+              <Cloud className="text-white w-5 h-5 stroke-2" />
             </div>
-            <span className="font-bold text-xl tracking-[0.2em] text-primary neon-text uppercase font-mono">
-              SecureLock<span className="text-primary/50">TS</span>
+            <span className="font-bold text-xl tracking-tight text-white font-sans drop-shadow-md">
+              The <span className="text-indigo-400 font-extrabold">Securelock</span>
             </span>
             {isLocked && (
-              <span className="ml-3 inline-flex items-center px-3 py-1 rounded bg-destructive/10 border border-destructive/50 text-[10px] font-mono font-bold text-destructive uppercase tracking-widest shadow-[0_0_10px_red] animate-pulse">
-                LOCKED
+              <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/50 text-[10px] font-sans font-bold text-red-400 shadow-[0_0_10px_rgba(255,0,0,0.3)] animate-pulse">
+                SYS_LOCKED
               </span>
             )}
             
             <button
               onClick={toggleSentinel}
-              title="Toggle the Backend Detection Engine to Demo Vulnerabilities"
-              className={`ml-4 flex items-center gap-2 px-3 py-1 rounded text-[10px] font-mono tracking-widest border transition-all ${
+              title="Toggle WAF Engine"
+              className={`ml-4 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-sans font-bold shadow-sm transition-all ${
                 isSentinelActive 
-                  ? 'bg-primary/20 text-primary border-primary/50 neon-border' 
-                  : 'bg-destructive/20 text-destructive border-destructive/50 shadow-[0_0_10px_red]'
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' 
+                  : 'bg-slate-800 text-slate-400 border border-slate-700'
               }`}
             >
-              {isSentinelActive ? <Shield className="w-3 h-3"/> : <ShieldOff className="w-3 h-3 animate-pulse"/>}
-              ENGINE: {isSentinelActive ? 'ON' : 'OFF'}
+              {isSentinelActive ? <ShieldCheck className="w-3.5 h-3.5"/> : <ShieldOff className="w-3.5 h-3.5"/>}
+              WAF {isSentinelActive ? 'ON' : 'OFF'}
             </button>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:space-x-2">
@@ -85,10 +86,10 @@ export default function Navigation() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`inline-flex items-center px-4 py-2 rounded text-xs font-mono font-bold uppercase tracking-widest transition-all ${
+                  className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium font-sans transition-all ${
                     isActive
-                      ? 'bg-primary/20 text-primary border border-primary/50 neon-border'
-                      : 'border border-transparent text-primary/50 hover:text-primary hover:bg-primary/10 hover:border-primary/20'
+                      ? 'bg-white/10 text-white shadow-inner'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   {link.label}

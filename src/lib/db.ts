@@ -9,6 +9,17 @@ export async function getDb() {
       filename: './database.sqlite',
       driver: sqlite3.Database
     }).then(async (db) => {
+      // ---------------------------------------------------------------------------------
+      // SQLITE AT-REST HARDENING (PRAGMAs)
+      // ---------------------------------------------------------------------------------
+      // Enforce zero-filling of deleted data to prevent memory scraping
+      await db.run('PRAGMA secure_delete = ON');
+      // Enforce strict foreign key constraints preventing orphaned payload bypasses
+      await db.run('PRAGMA foreign_keys = ON');
+      // Mitigate accidental corruption via synchronous journal commits
+      await db.run('PRAGMA journal_mode = WAL');
+      await db.run('PRAGMA synchronous = NORMAL');
+
       // Initialize the database with the unsafe users table
       await db.exec(`
         CREATE TABLE IF NOT EXISTS users (
