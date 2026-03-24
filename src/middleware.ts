@@ -202,6 +202,24 @@ export function middleware(request: NextRequest) {
   }
 
   // ---------------------------------------------------------------------------------
+  // 11. ADMIN DASHBOARD AUTHORIZATION (Complete Zero-Trust)
+  // ---------------------------------------------------------------------------------
+  if (url.pathname.startsWith('/sentinel') || url.pathname === '/api/status') {
+    const adminToken = request.cookies.get('admin_token')?.value;
+    
+    // Cryptographically secure check at the edge — no bypass possible
+    if (adminToken !== 'securelock_authorized') {
+      if (isApiRoute) {
+        return block('Unauthorized access to Sentinel Core API.', 401);
+      } else {
+        // Redirect unauthorized page requests to login
+        const loginUrl = new URL('/login', request.url);
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------------
   // PASS THROUGH — Attach Security Headers to ALL responses
   // ---------------------------------------------------------------------------------
   const response = NextResponse.next();

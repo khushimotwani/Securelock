@@ -17,7 +17,7 @@ export default function LockdownOverlay() {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch('/api/status');
+      const res = await fetch('/api/status/public');
       if (res.ok) {
         const data = await res.json();
         setIsLocked(data.isLockedDown);
@@ -38,19 +38,36 @@ export default function LockdownOverlay() {
   }, []);
 
   const handleAdminReset = async () => {
-    if (adminPass !== 'admin123') {
-      setAuthError('Invalid administrator credentials.');
-      return;
-    }
     setResetting(true);
     setAuthError('');
-    await fetch('/api/status', { method: 'POST' });
-    setTimeout(() => {
+    
+    // Step 1: Login to get the admin_token cookie
+    const loginRes = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: adminPass })
+    });
+    
+    if (!loginRes.ok) {
+      setAuthError('Invalid administrator credentials.');
       setResetting(false);
-      setShowAdminAuth(false);
-      setAdminPass('');
-      fetchStatus();
-    }, 1000);
+      return;
+    }
+
+    // Step 2: Now that we have the cookie, call the protected reset API
+    const resetRes = await fetch('/api/status', { method: 'POST' });
+    
+    if (resetRes.ok) {
+      setTimeout(() => {
+        setResetting(false);
+        setShowAdminAuth(false);
+        setAdminPass('');
+        fetchStatus();
+      }, 1000);
+    } else {
+      setAuthError('Reset failed. Check authorization.');
+      setResetting(false);
+    }
   };
 
   const formatCountdown = (ms: number) => {

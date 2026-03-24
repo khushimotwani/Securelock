@@ -155,10 +155,22 @@ export async function POST(req: Request) {
       });
       store.updateReputation(ip, false);
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         message: isSuccessfulBypass ? 'CRITICAL: Auth Bypassed!' : 'Login successful',
       });
+      
+      // Issue secure HttpOnly cookie for admin session
+      if (userRecord.username === 'admin' && !isSuccessfulBypass) {
+        response.cookies.set('admin_token', 'securelock_authorized', { 
+          path: '/', 
+          httpOnly: true, 
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 60 * 60 * 24 // 24 hours
+        });
+      }
+      
+      return response;
     } else {
       store.addLog({
         type: 'LOGIN_ATTEMPT',

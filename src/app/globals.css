@@ -104,7 +104,7 @@
   letter-spacing: 0.03em;
 }
 
-/* Sentinel dashboard keeps its dark theme */
+/* Sentinel dashboard keeps its dark terminal theme */
 .sentinel-dashboard {
   background: hsl(224, 71%, 4%);
   color: hsl(213, 31%, 91%);
@@ -120,6 +120,35 @@
   color: hsl(213, 31%, 91%);
   font-family: 'Geist Mono', 'Fira Code', monospace;
 }
+
+/* Override card backgrounds for dark theme */
+.sentinel-dashboard [class*="card"],
+.sentinel-dashboard [data-slot="card"] {
+  background-color: hsl(224, 60%, 8%) !important;
+  border-color: hsl(215, 40%, 20%) !important;
+  color: hsl(213, 31%, 91%);
+}
+
+.sentinel-dashboard [data-slot="card-header"] {
+  border-color: hsl(215, 40%, 20%) !important;
+}
+
+.sentinel-dashboard input,
+.sentinel-dashboard textarea,
+.sentinel-dashboard select {
+  background-color: hsl(224, 60%, 6%) !important;
+  color: hsl(213, 31%, 91%) !important;
+  border-color: hsl(215, 40%, 20%) !important;
+}
+
+.sentinel-dashboard a {
+  color: hsl(213, 72%, 60%);
+}
+
+/* Scrollbar dark for sentinel */
+.sentinel-dashboard ::-webkit-scrollbar-track { background: hsl(224, 60%, 6%); }
+.sentinel-dashboard ::-webkit-scrollbar-thumb { background: hsl(215, 40%, 25%); }
+.sentinel-dashboard ::-webkit-scrollbar-thumb:hover { background: hsl(215, 40%, 35%); }
 
 /* Scare mode for sentinel */
 @keyframes glitch-anim {

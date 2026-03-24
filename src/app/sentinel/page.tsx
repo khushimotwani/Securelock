@@ -1,9 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Terminal, Shield, Cpu, Activity, Server, AlertTriangle, ShieldAlert, HeartPulse, Ban, Clock, LogIn, Lock } from "lucide-react";
+import { Shield, Activity, AlertTriangle, ShieldAlert, HeartPulse, Ban, LogIn, Lock, ShieldCheck, Cpu } from "lucide-react";
 import Link from 'next/link';
 
 type LogEntry = {
@@ -29,7 +26,6 @@ export default function Dashboard() {
   const [bannedIPCount, setBannedIPCount] = useState(0);
   const [healCountdown, setHealCountdown] = useState<number | null>(null);
 
-  // Admin gate check
   useEffect(() => {
     setIsAdmin(typeof window !== 'undefined' && sessionStorage.getItem('securelock-admin') === 'true');
   }, []);
@@ -46,7 +42,6 @@ export default function Dashboard() {
         setTotalAttacksBlocked(data.totalAttacksBlocked || 0);
         setHealCount(data.healCount || 0);
         setBannedIPCount(data.bannedIPCount || 0);
-        
         if (data.isLockedDown && data.lockdownTimestamp && data.cooldownMs) {
           const elapsed = Date.now() - data.lockdownTimestamp;
           const remaining = Math.max(0, data.cooldownMs - elapsed);
@@ -55,9 +50,7 @@ export default function Dashboard() {
           setHealCountdown(null);
         }
       }
-    } catch {
-      /* silent */
-    }
+    } catch { /* silent */ }
   };
 
   useEffect(() => {
@@ -72,7 +65,7 @@ export default function Dashboard() {
   }, [isLocked, isAdmin]);
 
   const handleReset = async () => {
-    await fetch('/api/status', { method: 'POST' });
+    await fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
     fetchStatus();
   };
 
@@ -81,31 +74,33 @@ export default function Dashboard() {
     const secs = Math.floor((ms % 60000) / 1000);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-  // Access denied for non-admin
+
+  // Determine system status
+  const isAlert = failCount >= 3 || bannedIPCount > 0;
+  const statusLabel = isLocked ? 'LOCKDOWN' : isAlert ? 'ALERT' : 'SECURE';
+  const statusColor = isLocked ? '#dc2626' : isAlert ? '#d97706' : '#16a34a';
+
   if (isAdmin === null) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-slate-500 font-mono text-sm animate-pulse">Verifying credentials...</div>
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>Verifying credentials...</div>
       </div>
     );
   }
 
   if (!isAdmin) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center">
-            <Lock className="w-8 h-8 text-red-400" />
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', maxWidth: '420px' }}>
+          <div style={{ width: '64px', height: '64px', margin: '0 auto 1.5rem', borderRadius: '12px', background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Lock style={{ width: '32px', height: '32px', color: '#dc2626' }} />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Access Restricted</h1>
-          <p className="text-slate-400 text-sm mb-6">
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1b3a5c', marginBottom: '0.5rem', fontFamily: 'Merriweather, Georgia, serif' }}>Access Restricted</h1>
+          <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
             The Sentinel Core monitoring dashboard is restricted to authorized administrators only.
           </p>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors font-medium text-sm"
-          >
-            <LogIn className="w-4 h-4" /> Sign In as Admin
+          <Link href="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', background: '#1b3a5c', color: 'white', borderRadius: '6px', fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none' }}>
+            <LogIn style={{ width: '16px', height: '16px' }} /> Sign In as Admin
           </Link>
         </div>
       </div>
@@ -113,249 +108,205 @@ export default function Dashboard() {
   }
 
   return (
-    <div className={`space-y-8 relative z-10 w-full max-w-6xl mx-auto min-h-screen ${isLocked ? 'scare-mode' : ''}`}>
-      <div className="scanline"></div>
-
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-primary/20 pb-6">
+    <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid #1b3a5c', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-primary neon-text uppercase flex items-center gap-3">
-            <Terminal className="h-8 w-8" /> System_Monitoring_
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1b3a5c', margin: 0, fontFamily: 'Merriweather, Georgia, serif' }}>
+            🛡️ Sentinel Core Dashboard
           </h1>
-          <p className="text-primary/50 font-mono text-sm mt-2 flex items-center gap-2">
-            <Activity className="w-4 h-4 animate-pulse" /> Network Operations Center — Production Mode
+          <p style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: '4px' }}>Network Operations Center — Production Mode</p>
+        </div>
+        <button onClick={handleReset} style={{ padding: '8px 20px', background: '#1b3a5c', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', letterSpacing: '0.05em' }}>
+          RESET ENVIRONMENT
+        </button>
+      </div>
+
+      {/* Status Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        {/* Core Integrity Card */}
+        <div style={{ background: 'white', border: `2px solid ${statusColor}`, borderRadius: '8px', padding: '2rem', textAlign: 'center' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '1rem' }}>Core Integrity</p>
+          
+          <div style={{ width: '80px', height: '80px', margin: '0 auto 1rem', borderRadius: '50%', background: isLocked ? 'rgba(220,38,38,0.1)' : isAlert ? 'rgba(217,119,6,0.1)' : 'rgba(22,163,74,0.1)', border: `2px solid ${statusColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {isLocked ? <ShieldAlert style={{ width: '40px', height: '40px', color: statusColor }} /> :
+             isAlert ? <AlertTriangle style={{ width: '40px', height: '40px', color: statusColor }} /> :
+             <ShieldCheck style={{ width: '40px', height: '40px', color: statusColor }} />}
+          </div>
+
+          <div style={{ fontSize: '1.75rem', fontWeight: 900, color: statusColor, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            {statusLabel}
+          </div>
+
+          <p style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.75rem', padding: '4px 12px', background: '#f3f4f6', borderRadius: '4px', display: 'inline-block' }}>
+            {isLocked ? 'All traffic blocked — DDoS detected' : isAlert ? 'Threats detected — IPs banned' : 'Sentinel Engine Online'}
           </p>
-        </div>
-        <Button
-          onClick={handleReset}
-          className="font-mono bg-primary/10 text-primary hover:bg-primary/20 border border-primary/50 transition-all uppercase tracking-widest text-xs h-10 px-6 neon-border"
-        >
-          Reset Environment
-        </Button>
-      </div>
 
-      {/* Top Grid - Vitals */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Main Status Panel */}
-        <Card className={`glass-panel overflow-hidden transition-all duration-500 border-l-4 ${isLocked ? 'border-destructive bg-destructive/5 lockdown-flash border-l-destructive' : 'border-primary/40 border-l-primary shadow-[0_0_30px_rgba(0,255,0,0.05)]'}`}>
-          <CardContent className="p-8 h-full flex flex-col justify-center items-center relative">
-            <div className="absolute top-4 right-4">
-              {isLocked ? <ShieldAlert className="w-6 h-6 text-destructive animate-pulse" /> : <Shield className="w-6 h-6 text-primary/50" />}
+          {healCountdown !== null && healCountdown > 0 && (
+            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.3)', borderRadius: '4px', color: '#d97706', fontSize: '0.75rem', fontWeight: 600 }}>
+              <HeartPulse style={{ width: '14px', height: '14px' }} />
+              Self-heal in {formatCountdown(healCountdown)}
             </div>
-            <h2 className="text-xs font-bold font-mono tracking-[0.3em] text-primary/60 uppercase mb-4">Core Integrity</h2>
+          )}
+        </div>
 
-            {isLocked ? (
-              <div className="flex flex-col items-center mt-2">
-                <div className="w-20 h-20 rounded-full bg-destructive/20 flex items-center justify-center mb-4 neon-border !shadow-[0_0_20px_rgba(255,0,0,0.5)]">
-                  <span className="text-4xl">☠️</span>
-                </div>
-                <div className="text-destructive font-black text-3xl uppercase tracking-widest text-shadow-[0_0_10px_red]">
-                  LOCKED
-                </div>
-                <p className="text-[10px] text-destructive/80 mt-3 font-mono uppercase tracking-widest bg-destructive/10 px-3 py-1 rounded border border-destructive/30 text-center">
-                  Critical Threshold Breached<br />All traffic blocked
-                </p>
-                {/* Self-Heal Countdown */}
-                {healCountdown !== null && healCountdown > 0 && (
-                  <div className="mt-4 flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded text-amber-400">
-                    <HeartPulse className="w-4 h-4 animate-pulse" />
-                    <span className="font-mono text-xs uppercase tracking-widest">
-                      Self-heal in {formatCountdown(healCountdown)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ) : !isSentinelActive ? (
-              <div className="flex flex-col items-center mt-2">
-                <div className="w-20 h-20 rounded-full bg-yellow-500/10 border border-yellow-500/50 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(255,255,0,0.2)]">
-                  <AlertTriangle className="w-10 h-10 text-yellow-500 animate-pulse" />
-                </div>
-                <div className="text-yellow-500 font-black text-2xl uppercase tracking-widest text-shadow-[0_0_10px_yellow]">
-                  VULNERABLE
-                </div>
-                <p className="text-[10px] text-yellow-500/80 mt-3 font-mono uppercase tracking-widest bg-yellow-500/10 px-3 py-1 rounded border border-yellow-500/30 text-center">
-                  Sentinel Engine Offline<br />Raw Endpoints Exposed
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center mt-2">
-                <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center mb-4 transition-all duration-1000">
-                  <Shield className="w-10 h-10 text-primary neon-text" />
-                </div>
-                <div className="text-primary font-black text-3xl uppercase tracking-widest neon-text">
-                  SECURE
-                </div>
-                <p className="text-[10px] text-primary/80 mt-3 font-mono uppercase tracking-widest bg-primary/5 px-3 py-1 rounded border border-primary/20 text-center">
-                  Sentinel Engine Online<br />Traffic Monitored
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Threat Intel Panel */}
-        <Card className="glass-panel lg:col-span-2 relative overflow-hidden border-primary/40">
-          <div className="absolute opacity-5 top-[-10%] right-[-5%] w-64 h-64 font-mono text-primary select-none pointer-events-none">
-            <Server className="w-full h-full" />
+        {/* Threat Intel Matrix */}
+        <div style={{ background: 'white', border: '1px solid #d1d5db', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
+            <h2 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1b3a5c', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Source Sans Pro, sans-serif' }}>
+              <Activity style={{ width: '14px', height: '14px' }} /> Threat Intel Matrix
+            </h2>
           </div>
-
-          <CardHeader className="border-b border-primary/10 pb-4">
-            <CardTitle className="text-sm font-bold font-mono text-primary/80 uppercase tracking-[0.2em] flex items-center gap-2">
-              <Activity className="w-4 h-4" /> Threat Intel Matrix
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div style={{ padding: '1.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '0.75rem' }}>
               {/* Anomalies */}
-              <div className="flex flex-col p-4 bg-black/40 rounded border border-primary/10 relative overflow-hidden">
-                <div className={`absolute bottom-0 left-0 h-1 bg-primary/50 transition-all duration-500`} style={{ width: `${(failCount / 3) * 100}%` }}></div>
-                <span className="text-[10px] text-primary/50 font-mono uppercase tracking-widest mb-1">Anomalies</span>
-                <div className="text-4xl font-bold text-primary neon-text flex items-baseline gap-1">
-                  {failCount} <span className="text-sm text-primary/40">/ 3</span>
+              <div style={{ padding: '1rem', background: failCount >= 3 ? 'rgba(220,38,38,0.05)' : '#f9fafb', border: `1px solid ${failCount >= 3 ? '#fca5a5' : '#e5e7eb'}`, borderRadius: '6px' }}>
+                <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Anomalies</span>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: failCount >= 3 ? '#dc2626' : '#1b3a5c', marginTop: '4px' }}>
+                  {failCount}<span style={{ fontSize: '0.9rem', color: '#9ca3af' }}>/3</span>
                 </div>
               </div>
-
-              {/* Attacks Blocked */}
-              <div className="flex flex-col p-4 bg-black/40 rounded border border-primary/10">
-                <span className="text-[10px] text-primary/50 font-mono uppercase tracking-widest mb-1 flex items-center gap-1">
-                  <Ban className="w-3 h-3" /> Blocked
+              {/* Blocked */}
+              <div style={{ padding: '1rem', background: totalAttacksBlocked > 0 ? 'rgba(220,38,38,0.05)' : '#f9fafb', border: `1px solid ${totalAttacksBlocked > 0 ? '#fca5a5' : '#e5e7eb'}`, borderRadius: '6px' }}>
+                <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Ban style={{ width: '10px', height: '10px' }} /> Blocked
                 </span>
-                <div className="text-3xl font-bold text-red-400 font-mono mt-1">{totalAttacksBlocked}</div>
-                <span className="text-[9px] text-primary/30 mt-1 uppercase">Total attacks</span>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#dc2626', marginTop: '4px' }}>{totalAttacksBlocked}</div>
+                <span style={{ fontSize: '0.6rem', color: '#9ca3af' }}>Total attacks</span>
               </div>
-
-              {/* Self-Heal Cycles */}
-              <div className="flex flex-col p-4 bg-black/40 rounded border border-primary/10">
-                <span className="text-[10px] text-primary/50 font-mono uppercase tracking-widest mb-1 flex items-center gap-1">
-                  <HeartPulse className="w-3 h-3" /> Self-Heals
+              {/* Self-Heals */}
+              <div style={{ padding: '1rem', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
+                <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <HeartPulse style={{ width: '10px', height: '10px' }} /> Self-Heals
                 </span>
-                <div className="text-3xl font-bold text-emerald-400 font-mono mt-1">{healCount}</div>
-                <span className="text-[9px] text-primary/30 mt-1 uppercase">Recovery cycles</span>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#16a34a', marginTop: '4px' }}>{healCount}</div>
+                <span style={{ fontSize: '0.6rem', color: '#9ca3af' }}>Recovery cycles</span>
               </div>
-
               {/* Banned IPs */}
-              <div className="flex flex-col p-4 bg-black/40 rounded border border-primary/10">
-                <span className="text-[10px] text-primary/50 font-mono uppercase tracking-widest mb-1 flex items-center gap-1">
-                  <Ban className="w-3 h-3" /> Banned IPs
+              <div style={{ padding: '1rem', background: bannedIPCount > 0 ? 'rgba(217,119,6,0.05)' : '#f9fafb', border: `1px solid ${bannedIPCount > 0 ? '#fcd34d' : '#e5e7eb'}`, borderRadius: '6px' }}>
+                <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Ban style={{ width: '10px', height: '10px' }} /> Banned IPs
                 </span>
-                <div className="text-3xl font-bold text-amber-400 font-mono mt-1">{bannedIPCount}</div>
-                <span className="text-[9px] text-primary/30 mt-1 uppercase">Permanently blocked</span>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#d97706', marginTop: '4px' }}>{bannedIPCount}</div>
+                <span style={{ fontSize: '0.6rem', color: '#9ca3af' }}>Permanently blocked</span>
               </div>
             </div>
 
-            {/* Second row: System vitals */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-              <div className="flex flex-col p-4 bg-black/40 rounded border border-primary/10">
-                <span className="text-[10px] text-primary/50 font-mono uppercase tracking-widest mb-1">Defensive Posture</span>
-                <div className="mt-1 flex items-center h-full">
-                  <Badge className={`bg-black border transition-all duration-300 font-mono text-[10px] tracking-wider py-1 ${isLocked ? 'border-destructive text-destructive shadow-[0_0_10px_red]' : 'border-primary text-primary'}`}>
-                    {isLocked ? 'ISOLATION ACTIVE' : 'MONITORING'}
-                  </Badge>
+            {/* System vitals row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+              <div style={{ padding: '1rem', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
+                <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Defensive Posture</span>
+                <div style={{ marginTop: '6px' }}>
+                  <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: isLocked ? '#dc2626' : isAlert ? '#d97706' : '#1b3a5c', color: 'white', letterSpacing: '0.05em' }}>
+                    {isLocked ? 'LOCKDOWN' : isAlert ? 'ELEVATED' : 'MONITORING'}
+                  </span>
                 </div>
               </div>
-
-              <div className="flex flex-col p-4 bg-black/40 rounded border border-primary/10">
-                <span className="text-[10px] text-primary/50 font-mono uppercase tracking-widest mb-1 flex items-center gap-1"><Cpu className="w-3 h-3" /> CPU Load</span>
-                <div className="text-2xl font-bold text-primary/80 font-mono mt-1">{cpuUsage}%</div>
-                <div className="w-full bg-black/80 h-1 mt-2 rounded overflow-hidden">
-                  <div className="bg-primary h-full transition-all duration-500" style={{ width: `${cpuUsage}%` }}></div>
+              <div style={{ padding: '1rem', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
+                <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Cpu style={{ width: '10px', height: '10px' }} /> CPU Load
+                </span>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1b3a5c', marginTop: '4px' }}>{cpuUsage}%</div>
+                <div style={{ width: '100%', background: '#e5e7eb', height: '4px', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
+                  <div style={{ width: `${cpuUsage}%`, background: '#1b3a5c', height: '100%', transition: 'width 0.5s' }}></div>
                 </div>
               </div>
-
-              <div className="flex flex-col p-4 bg-black/40 rounded border border-primary/10">
-                <span className="text-[10px] text-primary/50 font-mono uppercase tracking-widest mb-1">MEM Load</span>
-                <div className="text-2xl font-bold text-primary/80 font-mono mt-1">{memUsage}%</div>
-                <div className="w-full bg-black/80 h-1 mt-2 rounded overflow-hidden">
-                  <div className="bg-primary h-full transition-all duration-500" style={{ width: `${memUsage}%` }}></div>
+              <div style={{ padding: '1rem', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
+                <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>MEM Load</span>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1b3a5c', marginTop: '4px' }}>{memUsage}%</div>
+                <div style={{ width: '100%', background: '#e5e7eb', height: '4px', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
+                  <div style={{ width: `${memUsage}%`, background: '#1b3a5c', height: '100%', transition: 'width 0.5s' }}></div>
                 </div>
               </div>
             </div>
 
-            {isLocked && (
-              <div className="mt-6 p-4 bg-destructive/10 text-destructive border border-destructive/50 text-xs font-mono uppercase tracking-widest flex items-start gap-3 rounded shadow-[inset_0_0_20px_rgba(255,0,0,0.1)]">
-                <AlertTriangle className="w-5 h-5 flex-shrink-0 animate-pulse" />
-                <p className="leading-relaxed">
-                  Critical threshold exceeded. Attack signatures matched. All application endpoints are locked. Incoming traffic blackholed.
-                  {healCountdown !== null && healCountdown > 0 && (
-                    <span className="block mt-2 text-amber-400">
-                      <HeartPulse className="w-3 h-3 inline mr-1" />Self-healing in {formatCountdown(healCountdown)}. System will auto-recover while keeping all attacker IPs permanently banned.
-                    </span>
+            {/* Alert banner when locked or under attack */}
+            {(isLocked || isAlert) && (
+              <div style={{ marginTop: '1rem', padding: '1rem', background: isLocked ? 'rgba(220,38,38,0.06)' : 'rgba(217,119,6,0.06)', border: `1px solid ${isLocked ? '#fca5a5' : '#fcd34d'}`, borderRadius: '6px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <AlertTriangle style={{ width: '18px', height: '18px', color: statusColor, flexShrink: 0, marginTop: '2px' }} />
+                <div style={{ fontSize: '0.8rem', color: '#374151', lineHeight: 1.5 }}>
+                  {isLocked ? (
+                    <>
+                      <strong style={{ color: '#dc2626' }}>CRITICAL:</strong> Coordinated DDoS detected. All endpoints locked. Incoming traffic blocked.
+                      {healCountdown !== null && healCountdown > 0 && (
+                        <span style={{ display: 'block', marginTop: '4px', color: '#d97706' }}>
+                          Self-healing in {formatCountdown(healCountdown)}. Attacker IPs remain permanently banned.
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <strong style={{ color: '#d97706' }}>ALERT:</strong> {totalAttacksBlocked} attack(s) intercepted. {bannedIPCount} IP(s) permanently banned. Legitimate users are unaffected.
+                    </>
                   )}
-                </p>
+                </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Terminal Event Log */}
-      <Card className="glass-panel overflow-hidden mt-8 border-primary/40">
-        <div className="p-4 border-b border-primary/20 bg-primary/5 flex flex-row items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 bg-primary rounded-full animate-pulse shadow-[0_0_8px_#00ff00]"></span>
-            <h2 className="text-sm font-bold font-mono tracking-[0.2em] text-primary uppercase">Syslog_Live_Feed</h2>
+      {/* Syslog Live Feed */}
+      <div style={{ background: 'white', border: '1px solid #d1d5db', borderRadius: '8px', overflow: 'hidden' }}>
+        <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #e5e7eb', background: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '8px', height: '8px', background: '#16a34a', borderRadius: '50%', display: 'inline-block' }}></span>
+            <h2 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1b3a5c', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0, fontFamily: 'Source Sans Pro, sans-serif' }}>
+              Syslog Live Feed
+            </h2>
           </div>
-          <span className="text-[10px] font-mono text-primary/40 uppercase">Filtering: All Events</span>
+          <span style={{ fontSize: '0.65rem', color: '#9ca3af', letterSpacing: '0.05em' }}>FILTERING: ALL EVENTS</span>
         </div>
 
-        <CardContent className="p-0 max-h-[400px] overflow-y-auto">
-          <div className="divide-y divide-primary/10">
-            {logs.length === 0 ? (
-              <div className="p-12 text-center text-primary/30 font-mono text-sm uppercase tracking-widest">
-                <Activity className="w-8 h-8 mx-auto mb-4 opacity-20" />
-                Listening for incoming telemetry...
-              </div>
-            ) : (
-              logs.map((log) => (
-                <div key={log.id} className="p-4 flex items-start gap-4 hover:bg-primary/5 transition-colors border-l-2 border-transparent hover:border-primary group">
-                  <div className="flex-shrink-0 mt-1 w-8 flex justify-center text-lg">
-                    {log.type === 'SYSTEM_LOCKDOWN' && <span className="drop-shadow-[0_0_8px_red]">🚨</span>}
-                    {log.type === 'SYSTEM_HEALED' && <span className="drop-shadow-[0_0_8px_green]">💚</span>}
-                    {log.type === 'NORMAL' && <span>✅</span>}
-                    {log.type === 'RATE_LIMIT_EXCEEDED' && <span className="drop-shadow-[0_0_8px_orange]">🛑</span>}
-                    {log.type === 'SCANNER_DETECTED' && <span className="drop-shadow-[0_0_8px_purple]">🤖</span>}
-                    {['SQL_INJECTION', 'COMMAND_INJECTION', 'XSS_INJECTION', 'PATH_TRAVERSAL', 'SSRF', 'TEMPLATE_INJECTION', 'HEADER_INJECTION', 'XXE', 'LDAP_INJECTION', 'ENCODED_ATTACK', 'LOGIN_ATTEMPT'].includes(log.type) && <span className="drop-shadow-[0_0_8px_yellow]">⚠️</span>}
+        <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
+          {logs.length === 0 ? (
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#9ca3af', fontSize: '0.85rem' }}>
+              <Activity style={{ width: '32px', height: '32px', margin: '0 auto 1rem', opacity: 0.3 }} />
+              Listening for incoming telemetry...
+            </div>
+          ) : (
+            logs.map((log) => {
+              const isAttack = ['SQL_INJECTION', 'COMMAND_INJECTION', 'XSS_INJECTION', 'PATH_TRAVERSAL', 'SSRF', 'TEMPLATE_INJECTION', 'HEADER_INJECTION', 'XXE', 'LDAP_INJECTION', 'ENCODED_ATTACK'].includes(log.type);
+              const isBan = log.type === 'IP_BANNED';
+              const isLockdownEvent = log.type === 'SYSTEM_LOCKDOWN';
+              const isHeal = log.type === 'SYSTEM_HEALED';
+              const isNormal = log.type === 'NORMAL';
+              const isLoginAttempt = log.type === 'LOGIN_ATTEMPT';
+
+              const iconBg = isLockdownEvent ? '#dc2626' : isHeal ? '#16a34a' : isBan ? '#d97706' : isAttack ? '#dc2626' : isLoginAttempt ? '#d97706' : isNormal ? '#16a34a' : '#6b7280';
+              const iconEmoji = isLockdownEvent ? '🚨' : isHeal ? '💚' : isBan ? '🚫' : isAttack ? '⚠️' : isNormal ? '✅' : '⚠️';
+              const msgColor = isLockdownEvent ? '#dc2626' : isHeal ? '#16a34a' : isBan ? '#d97706' : isAttack ? '#dc2626' : isNormal ? '#16a34a' : '#374151';
+
+              return (
+                <div key={log.id} style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <span style={{ fontSize: '1.25rem', flexShrink: 0, marginTop: '2px' }}>{iconEmoji}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: '0.85rem', color: msgColor, fontWeight: isLockdownEvent || isBan ? 700 : 400, margin: 0, fontFamily: 'Source Sans Pro, sans-serif' }}>
+                      {log.message}
+                    </p>
+                    <p style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '2px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                      {log.type.replace(/_/g, ' ')}
+                    </p>
+                    {log.aiReasoning && (
+                      <div style={{ marginTop: '8px', padding: '8px 12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '4px', position: 'relative' }}>
+                        <span style={{ position: 'absolute', top: '-8px', left: '8px', background: 'white', padding: '0 6px', fontSize: '0.6rem', color: '#1b3a5c', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>AI Sentinel Reasoning</span>
+                        <p style={{ fontSize: '0.78rem', color: '#1e40af', fontStyle: 'italic', margin: 0 }}>&ldquo;{log.aiReasoning}&rdquo;</p>
+                      </div>
+                    )}
                   </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex-grow">
-                      <p className={`font-mono text-sm ${
-                        log.type === 'NORMAL' ? 'text-green-400' :
-                        log.type === 'SYSTEM_LOCKDOWN' ? 'text-red-400 font-bold' :
-                        log.type === 'SYSTEM_HEALED' ? 'text-emerald-400 font-bold' :
-                        log.type === 'RATE_LIMIT_EXCEEDED' ? 'text-orange-400' :
-                        log.type === 'SCANNER_DETECTED' ? 'text-purple-400' :
-                        'text-primary'
-                      }`}>
-                        {log.message}
-                      </p>
-                      <p className="text-xs text-white/40 mt-1 uppercase tracking-wider font-semibold">{log.type.replace(/_/g, ' ')}</p>
-
-                      {log.aiReasoning && (
-                        <div className="mt-3 p-2 bg-primary/10 border border-primary/20 rounded relative">
-                          <span className="absolute -top-2 left-2 bg-black px-1 text-[9px] text-primary/70 font-bold tracking-widest uppercase">SENTINEL AI REASONING</span>
-                          <p className="text-xs text-primary/90 font-mono italic opacity-90">&quot;{log.aiReasoning}&quot;</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex-shrink-0 text-right space-y-2 w-32 flex flex-col justify-end items-end">
-                    <p className="text-[10px] text-primary/50 font-mono tracking-widest">{new Date(log.timestamp).toLocaleTimeString()}</p>
-                    <p className="bg-black border border-primary/20 px-2 py-1 rounded text-[10px] text-primary/70 font-mono">{log.ip}</p>
+                  <div style={{ flexShrink: 0, textAlign: 'right', minWidth: '120px' }}>
+                    <p style={{ fontSize: '0.7rem', color: '#9ca3af', margin: 0 }}>{new Date(log.timestamp).toLocaleTimeString()}</p>
+                    <p style={{ display: 'inline-block', marginTop: '4px', background: '#1b3a5c', color: 'white', padding: '2px 8px', borderRadius: '3px', fontSize: '0.65rem', fontFamily: 'monospace' }}>{log.ip}</p>
                     {log.userAgent && (
-                      <p className="text-[8px] text-primary/40 font-mono truncate w-full" title={log.userAgent}>
-                        {log.userAgent.split(' ')[0] || 'Unknown Origin'}
-                      </p>
+                      <p style={{ fontSize: '0.6rem', color: '#9ca3af', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>{log.userAgent.split(' ')[0]}</p>
                     )}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }
