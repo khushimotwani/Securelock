@@ -25,14 +25,27 @@ export async function getDb() {
         CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           username TEXT NOT NULL,
-          password TEXT NOT NULL
+          password TEXT NOT NULL,
+          flag TEXT
         );
       `);
       
-      // Ensure admin exists
+      // Ensure admin exists with CTF flag (hidden in the DB for CTF challenge)
       const adminExists = await db.get('SELECT * FROM users WHERE username = ?', ['admin']);
       if (!adminExists) {
-         await db.run('INSERT INTO users (username, password) VALUES (?, ?)', ['admin', 'admin123']);
+        await db.run(
+          'INSERT INTO users (username, password, flag) VALUES (?, ?, ?)',
+          ['admin', 'admin123', 'FLAG{s3cur3l0ck_SQLi_m4st3r}']
+        );
+      } else {
+        // Add flag column to existing admin if missing
+        try {
+          await db.run('ALTER TABLE users ADD COLUMN flag TEXT');
+        } catch { /* column may already exist */ }
+        await db.run('UPDATE users SET flag = ? WHERE username = ? AND flag IS NULL', [
+          'FLAG{s3cur3l0ck_SQLi_m4st3r}',
+          'admin',
+        ]);
       }
       return db;
     });

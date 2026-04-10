@@ -18,6 +18,8 @@ export default function Navigation() {
     { label: 'National Anthem', href: '/blog/national-anthem' },
     { label: 'Why We Love America', href: '/blog/why-we-love-america' },
     { label: 'Patriots', href: '/blog/greatest-patriots' },
+    { label: '🚩 CTF', href: '/ctf' },
+    { label: '🔬 Vuln Lab', href: '/vulnlab' },
   ];
 
   return (

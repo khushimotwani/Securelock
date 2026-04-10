@@ -11,6 +11,19 @@ export type LogEntry = {
   pathId?: string;
   aiReasoning?: string;
   severity?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  // Geolocation for attack map
+  country?: string;
+  countryCode?: string;
+  lat?: number;
+  lon?: number;
+};
+
+export type Achievement = {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlockedAt: string;
 };
 
 type IPReputation = {
@@ -34,6 +47,7 @@ type StoreState = {
   healCount: number;
   distinctAttackerIPs: string[];   // IPs that attacked in the current window
   ddosWindowStart: number | null;  // When the DDoS detection window started
+  achievements: Achievement[];     // Unlocked achievements
 };
 
 const DB_PATH = path.join(process.cwd(), '.securelock-db.json');
@@ -66,6 +80,7 @@ function getState(): StoreState {
       if (!state.healCount) state.healCount = 0;
       if (!state.distinctAttackerIPs) state.distinctAttackerIPs = [];
       if (!state.ddosWindowStart) state.ddosWindowStart = null;
+      if (!state.achievements) state.achievements = [];
       if (state.isLocked !== undefined) {
         state.isGlobalLockdown = state.isLocked;
         delete state.isLocked;
@@ -83,6 +98,7 @@ function getState(): StoreState {
     logs: [], globalFailCount: 0, isGlobalLockdown: false, isSentinelActive: true,
     rateLimitTracker: {}, ipReputation: {}, globalLockdownTimestamp: null,
     totalAttacksBlocked: 0, healCount: 0, distinctAttackerIPs: [], ddosWindowStart: null,
+    achievements: [],
   };
 }
 
@@ -306,7 +322,28 @@ class SecurityStore {
       distinctAttackerIPs: state.distinctAttackerIPs?.length || 0,
       ddosThreshold: DDOS_ATTACKER_THRESHOLD,
       ipBanThreshold: IP_BAN_THRESHOLD,
+      achievements: state.achievements || [],
     };
+  }
+
+  unlockAchievement(id: string, title: string, description: string, icon: string) {
+    const state = getState();
+    if (!state.achievements) state.achievements = [];
+    // Don't duplicate
+    if (state.achievements.some(a => a.id === id)) return false;
+    state.achievements.push({
+      id,
+      title,
+      description,
+      icon,
+      unlockedAt: new Date().toISOString(),
+    });
+    saveState(state);
+    return true;
+  }
+
+  getAchievements(): Achievement[] {
+    return getState().achievements || [];
   }
 
   toggleSentinel() {
@@ -321,6 +358,7 @@ class SecurityStore {
       logs: [], globalFailCount: 0, isGlobalLockdown: false, isSentinelActive: true,
       rateLimitTracker: {}, ipReputation: {}, globalLockdownTimestamp: null,
       totalAttacksBlocked: 0, healCount: 0, distinctAttackerIPs: [], ddosWindowStart: null,
+      achievements: [],
     });
   }
 }
