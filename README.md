@@ -15,9 +15,10 @@ SecureLockTS is a TypeScript web application built with Next.js that demonstrate
 | Layer | Technology | Purpose |
 |---|---|---|
 | **Framework** | Next.js 16 + TypeScript (strict mode) | Full-stack web application with API routes |
-| **Database** | SQLite (via `sqlite3`) | Stores user credentials for auth demo |
+| **Database** | SQLite (via `sqlite3`) | Stores user credentials (scrypt-hashed passwords) for auth demo |
 | **AI Detection** | Google Gemini API (`gemini-2.5-flash`) | Analyzes payloads for malicious intent in real time |
-| **State Management** | JSON file store (`.securelock-db.json`) | Tracks logs, anomaly count, lockdown state, rate limits, and IP bans |
+| **State Management** | In-memory cache + async JSON persistence | Tracks logs, anomaly count, lockdown state, rate limits, and IP bans |
+| **Password Hashing** | Node.js `crypto.scrypt` | OWASP-recommended KDF with random salt and timing-safe comparison |
 | **Static Analysis** | ESLint + `eslint-plugin-security`, TypeScript strict mode | Identifies unsafe coding patterns at build time |
 | **Security Headers** | Next.js config (CSP, HSTS, X-Frame-Options, etc.) | Defense-in-depth HTTP hardening |
 
@@ -75,11 +76,20 @@ npm run dev
 # Open http://localhost:3000
 ```
 
-To enable AI-powered detection, set the Gemini API key:
+### Environment Variables
+
+Create a `.env.local` file in the project root:
 
 ```bash
-GEMINI_API_KEY=your_key_here npm run dev
+# Required for AI-powered threat detection
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Admin session token — change to a strong random secret in production
+# Generate one with: openssl rand -base64 32
+ADMIN_SESSION_TOKEN=your_secret_token_here
 ```
+
+> **Note:** If `ADMIN_SESSION_TOKEN` is not set, a development-only fallback is used. For production, always set this to a cryptographically random value.
 
 ### Running the Test Bench
 
@@ -87,11 +97,11 @@ With the dev server running in another terminal:
 
 ```bash
 # Full verification test bench (all security mechanisms)
-node test_bench.mjs
+npm test
 
-# Individual test scripts
-node run_tests.mjs           # Sequential attack simulation
-node run_rate_limit_test.mjs  # DDoS/brute-force stress test
+# Individual test suites
+npm run test:attacks          # Sequential attack simulation
+npm run test:rate-limit       # DDoS/brute-force stress test
 ```
 
 ### Static Analysis

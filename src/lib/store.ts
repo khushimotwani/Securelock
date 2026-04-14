@@ -1,4 +1,5 @@
-import fs from 'fs';
+import { promises as fs } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
 export type LogEntry = {
@@ -69,31 +70,7 @@ const TIGHT_RATE_LIMIT = 5;
 const GLOBAL_LOCKDOWN_COOLDOWN_MS = 5 * 60 * 1000;  // 5 min for global lockdown
 const IP_REPUTATION_DECAY_MS = 30 * 60 * 1000;
 
-function getState(): StoreState {
-  try {
-    if (fs.existsSync(DB_PATH)) {
-      const data = fs.readFileSync(DB_PATH, 'utf-8');
-      const state = JSON.parse(data);
-      if (!state.ipReputation) state.ipReputation = {};
-      if (!state.globalLockdownTimestamp) state.globalLockdownTimestamp = null;
-      if (!state.totalAttacksBlocked) state.totalAttacksBlocked = 0;
-      if (!state.healCount) state.healCount = 0;
-      if (!state.distinctAttackerIPs) state.distinctAttackerIPs = [];
-      if (!state.ddosWindowStart) state.ddosWindowStart = null;
-      if (!state.achievements) state.achievements = [];
-      if (state.isLocked !== undefined) {
-        state.isGlobalLockdown = state.isLocked;
-        delete state.isLocked;
-      }
-      if (!state.globalFailCount && state.failCount) {
-        state.globalFailCount = state.failCount;
-      }
-      if (!state.globalFailCount) state.globalFailCount = 0;
-      return state;
-    }
-  } catch (e) {
-    console.error('Error reading DB:', e);
-  }
+function defaultState(): StoreState {
   return {
     logs: [], globalFailCount: 0, isGlobalLockdown: false, isSentinelActive: true,
     rateLimitTracker: {}, ipReputation: {}, globalLockdownTimestamp: null,
@@ -102,18 +79,73 @@ function getState(): StoreState {
   };
 }
 
-function saveState(state: StoreState) {
-  try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(state, null, 2));
-  } catch (e) {
-    console.error('Error writing DB:', e);
-  }
-}
-
+/**
+ * PERFORMANCE FIX: In-memory state cache with async file persistence.
+ *
+ * Previous implementation called readFileSync + writeFileSync on EVERY request,
+ * blocking the Node.js event loop. This version:
+ * - Loads state from disk ONCE on first access (sync, at startup)
+ * - Keeps all state in memory for zero-latency reads
+ * - Writes back to disk ASYNCHRONOUSLY (non-blocking) after mutations
+ * - Debounces writes to avoid excessive disk I/O on burst traffic
+ */
 class SecurityStore {
+  private state: StoreState;
+  private loaded = false;
+  private writeScheduled = false;
+
+  constructor() {
+    this.state = defaultState();
+  }
+
+  /** Load state from disk on first access (sync — only happens once at startup) */
+  private ensureLoaded(): StoreState {
+    if (!this.loaded) {
+      try {
+        if (existsSync(DB_PATH)) {
+          const data = readFileSync(DB_PATH, 'utf-8');
+          const saved = JSON.parse(data);
+          // Migrate old field names
+          if (saved.isLocked !== undefined) {
+            saved.isGlobalLockdown = saved.isLocked;
+            delete saved.isLocked;
+          }
+          if (!saved.globalFailCount && saved.failCount) {
+            saved.globalFailCount = saved.failCount;
+          }
+          // Fill missing fields
+          this.state = {
+            ...defaultState(),
+            ...saved,
+          };
+        }
+      } catch (e) {
+        console.error('Error reading DB on startup:', e);
+        this.state = defaultState();
+      }
+      this.loaded = true;
+    }
+    return this.state;
+  }
+
+  /** Schedule an async write-back to disk (debounced, non-blocking) */
+  private schedulePersist() {
+    if (this.writeScheduled) return;
+    this.writeScheduled = true;
+    // Debounce: wait 50ms to batch rapid mutations into one write
+    setTimeout(async () => {
+      this.writeScheduled = false;
+      try {
+        await fs.writeFile(DB_PATH, JSON.stringify(this.state, null, 2));
+      } catch (e) {
+        console.error('Error persisting DB:', e);
+      }
+    }, 50);
+  }
 
   // Self-heal for global lockdown only
-  private checkAutoHeal(state: StoreState): StoreState {
+  private checkAutoHeal(): void {
+    const state = this.ensureLoaded();
     if (state.isGlobalLockdown && state.globalLockdownTimestamp) {
       const elapsed = Date.now() - state.globalLockdownTimestamp;
       if (elapsed >= GLOBAL_LOCKDOWN_COOLDOWN_MS) {
@@ -124,24 +156,23 @@ class SecurityStore {
         state.distinctAttackerIPs = [];
         state.ddosWindowStart = null;
         state.logs.unshift({
-          id: 'heal-' + Date.now(),
+          id: crypto.randomUUID(),
           type: 'SYSTEM_HEALED',
           message: `Global lockdown lifted after ${Math.round(GLOBAL_LOCKDOWN_COOLDOWN_MS / 60000)} min cooldown. Heal cycle #${state.healCount}. Individual IP bans remain active.`,
           timestamp: new Date().toISOString(),
           ip: 'SYSTEM',
           userAgent: 'Self-Heal Engine',
         });
-        saveState(state);
+        this.schedulePersist();
       }
     }
-    return state;
   }
 
   // -----------------------------------------------------------------------
   // PER-IP REPUTATION & BANNING
   // -----------------------------------------------------------------------
   updateReputation(ip: string, malicious: boolean): number {
-    const state = getState();
+    const state = this.ensureLoaded();
     if (!state.ipReputation) state.ipReputation = {};
 
     const now = Date.now();
@@ -162,7 +193,7 @@ class SecurityStore {
         rep.banned = true;
         rep.bannedAt = now;
         state.logs.unshift({
-          id: 'ban-' + Date.now(),
+          id: crypto.randomUUID(),
           type: 'IP_BANNED',
           message: `IP [${ip}] permanently banned after ${rep.attacks} attacks. Other users unaffected.`,
           timestamp: new Date().toISOString(),
@@ -176,22 +207,21 @@ class SecurityStore {
       }
     }
 
-    state.ipReputation[ip] = rep;
-    saveState(state);
+    this.schedulePersist();
     return rep.score;
   }
 
   /** Check if a specific IP is banned */
   isBanned(ip: string): boolean {
-    const state = getState();
+    const state = this.ensureLoaded();
     return state.ipReputation?.[ip]?.banned === true;
   }
 
   /** Check if global lockdown is active (DDoS only) */
   isGloballyLockedDown(): boolean {
-    const state = getState();
-    this.checkAutoHeal(state);
-    return state.isGlobalLockdown;
+    this.ensureLoaded();
+    this.checkAutoHeal();
+    return this.state.isGlobalLockdown;
   }
 
   /** Combined check: is this IP blocked? (either per-IP ban OR global lockdown) */
@@ -205,7 +235,7 @@ class SecurityStore {
   // RATE LIMITING WITH PROGRESSIVE PENALTIES
   // -----------------------------------------------------------------------
   checkRateLimit(ip: string, userAgent: string): boolean {
-    const state = getState();
+    const state = this.ensureLoaded();
     const now = Date.now();
 
     if (!state.rateLimitTracker) state.rateLimitTracker = {};
@@ -218,7 +248,7 @@ class SecurityStore {
     const maxReqs = (rep && rep.attacks >= 3) ? TIGHT_RATE_LIMIT : MAX_REQUESTS_PER_WINDOW;
 
     if (state.rateLimitTracker[ip].length > maxReqs && state.isSentinelActive) {
-      saveState(state);
+      this.schedulePersist();
       if (state.rateLimitTracker[ip].length === maxReqs + 1) {
         this.addLog({
           type: 'RATE_LIMIT_EXCEEDED',
@@ -230,7 +260,7 @@ class SecurityStore {
       return false;
     }
 
-    saveState(state);
+    this.schedulePersist();
     return true;
   }
 
@@ -238,12 +268,12 @@ class SecurityStore {
   // LOG & ATTACK TRACKING
   // -----------------------------------------------------------------------
   addLog(log: Omit<LogEntry, 'id' | 'timestamp'>) {
-    const state = getState();
-    this.checkAutoHeal(state);
+    const state = this.ensureLoaded();
+    this.checkAutoHeal();
 
     const entry: LogEntry = {
       ...log,
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
       userAgent: log.userAgent || 'Unknown',
     };
@@ -275,7 +305,7 @@ class SecurityStore {
         state.isGlobalLockdown = true;
         state.globalLockdownTimestamp = now;
         state.logs.unshift({
-          id: 'lockdown-' + now,
+          id: crypto.randomUUID(),
           type: 'SYSTEM_LOCKDOWN',
           message: `GLOBAL LOCKDOWN: Coordinated DDoS detected. ${state.distinctAttackerIPs.length} attacker IPs, ${state.globalFailCount} attacks in ${DDOS_WINDOW_MS / 1000}s. Full site shutdown initiated. Auto-heal in ${GLOBAL_LOCKDOWN_COOLDOWN_MS / 60000} min.`,
           timestamp: new Date().toISOString(),
@@ -289,26 +319,26 @@ class SecurityStore {
       state.logs = state.logs.slice(0, 100);
     }
 
-    saveState(state);
+    this.schedulePersist();
   }
 
   // -----------------------------------------------------------------------
   // ACCESSORS
   // -----------------------------------------------------------------------
-  getLogs() { return getState().logs; }
-  getGlobalFailCount() { return getState().globalFailCount; }
-  isDetectionActive() { return getState().isSentinelActive; }
-  getTotalAttacksBlocked() { return getState().totalAttacksBlocked || 0; }
-  getHealCount() { return getState().healCount || 0; }
+  getLogs() { return this.ensureLoaded().logs; }
+  getGlobalFailCount() { return this.ensureLoaded().globalFailCount; }
+  isDetectionActive() { return this.ensureLoaded().isSentinelActive; }
+  getTotalAttacksBlocked() { return this.ensureLoaded().totalAttacksBlocked || 0; }
+  getHealCount() { return this.ensureLoaded().healCount || 0; }
 
   getBannedIPCount(): number {
-    const state = getState();
+    const state = this.ensureLoaded();
     return Object.values(state.ipReputation || {}).filter(r => r.banned).length;
   }
 
   getFullStatus() {
-    const state = getState();
-    this.checkAutoHeal(state);
+    const state = this.ensureLoaded();
+    this.checkAutoHeal();
     return {
       isLockedDown: state.isGlobalLockdown,
       failCount: state.globalFailCount,
@@ -327,7 +357,7 @@ class SecurityStore {
   }
 
   unlockAchievement(id: string, title: string, description: string, icon: string) {
-    const state = getState();
+    const state = this.ensureLoaded();
     if (!state.achievements) state.achievements = [];
     // Don't duplicate
     if (state.achievements.some(a => a.id === id)) return false;
@@ -338,28 +368,25 @@ class SecurityStore {
       icon,
       unlockedAt: new Date().toISOString(),
     });
-    saveState(state);
+    this.schedulePersist();
     return true;
   }
 
   getAchievements(): Achievement[] {
-    return getState().achievements || [];
+    return this.ensureLoaded().achievements || [];
   }
 
   toggleSentinel() {
-    const state = getState();
+    const state = this.ensureLoaded();
     state.isSentinelActive = !state.isSentinelActive;
-    saveState(state);
+    this.schedulePersist();
     return state.isSentinelActive;
   }
 
   reset() {
-    saveState({
-      logs: [], globalFailCount: 0, isGlobalLockdown: false, isSentinelActive: true,
-      rateLimitTracker: {}, ipReputation: {}, globalLockdownTimestamp: null,
-      totalAttacksBlocked: 0, healCount: 0, distinctAttackerIPs: [], ddosWindowStart: null,
-      achievements: [],
-    });
+    this.state = defaultState();
+    this.loaded = true;
+    this.schedulePersist();
   }
 }
 

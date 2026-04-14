@@ -26,15 +26,19 @@ export default function LoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
+        redirect: 'manual', // Don't auto-follow redirects — we handle rickroll ourselves
       });
+
+      // Banned IP → rickroll redirect (302)
+      if (res.type === 'opaqueredirect' || res.status === 0) {
+        window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+        return;
+      }
 
       const data = await res.json();
       if (res.ok && data.success) {
         setIsSuccess(true);
         setStatus(data.message || 'Login successful');
-        if (username === 'admin') {
-          sessionStorage.setItem('securelock-admin', 'true');
-        }
         setTimeout(() => window.location.href = '/sentinel', 1000);
       } else {
         setIsError(true);

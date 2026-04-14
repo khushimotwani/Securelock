@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# securelock runtime state & DB (not for version control)
+.securelock-db.json
+status.json
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# dev/test scripts at project root
+test_attacks.js
+run_rate_limit_test.mjs
+run_tests.mjs
+test_bench.mjs
+read_pdf.js
+index.ts

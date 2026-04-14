@@ -95,21 +95,13 @@ Analyze the payload and determine if it contains malicious exploit signatures ba
     const data = JSON.parse(jsonStr) as AIAnalysisResult;
     
     return data;
-  } catch (err: any) {
-    console.error("AI Analysis failed. Activating Manual Fallback:", err.message);
+  } catch (err: unknown) {
+    const errMessage = err instanceof Error ? err.message : String(err);
+    console.error("AI Analysis failed. Activating Manual Fallback:", errMessage);
     
     // ---------------------------------------------------------------------------------
     // 2. AUTOMATIC FALLBACK RESILIENCE (If AI is down or rate limited)
     // ---------------------------------------------------------------------------------
-    
-    // Perfect Demo Fallback: Guarantee the AI screenshot for the mid-project report
-    if (payload.includes('/**/ OR') || payload.includes('/*!50000') || payload.includes('LIKE')) {
-      return {
-        isMalicious: true,
-        confidence: 97,
-        reasoning: "AI Vision: Detected sophisticated obfuscated SQL injection attempt utilizing inline comments to bypass static regex string matching.",
-      };
-    }
 
     const manualDangerRegex = /[;&|`$\\]|(?:(?:\.\.\/)+)|(?:wget|curl|nc|bash|sh|powershell|cmd)|(?:<script.*?>.*?<\/script>)|(' OR '1'='1'|admin'--|;|UNION)/i;
     const isSuspicious = manualDangerRegex.test(payload);

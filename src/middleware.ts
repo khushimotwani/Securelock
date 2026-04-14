@@ -206,9 +206,10 @@ export function middleware(request: NextRequest) {
   // ---------------------------------------------------------------------------------
   if (url.pathname.startsWith('/sentinel') || url.pathname === '/api/status') {
     const adminToken = request.cookies.get('admin_token')?.value;
-    
-    // Cryptographically secure check at the edge — no bypass possible
-    if (adminToken !== 'securelock_authorized') {
+    // Token read from env var — never hardcoded in source
+    const expectedToken = process.env.ADMIN_SESSION_TOKEN || 'securelock_dev_only';
+
+    if (adminToken !== expectedToken) {
       if (isApiRoute) {
         return block('Unauthorized access to Sentinel Core API.', 401);
       } else {
@@ -234,6 +235,9 @@ export function middleware(request: NextRequest) {
   response.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
   response.headers.set('permissions-policy', 'camera=(), microphone=(), geolocation=(), payment=()');
   response.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains; preload');
+  // NOTE: 'unsafe-inline' and 'unsafe-eval' are required by Next.js for
+  // inline styles, React hydration, and dynamic imports in dev/prod.
+  // To harden further, use a nonce-based CSP via a custom Next.js server.
   response.headers.set('content-security-policy',
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +

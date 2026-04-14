@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { store } from '@/lib/store';
 import { getDb } from '@/lib/db';
 import { analyzePayload } from '@/lib/ai';
+import { verifyPassword } from '@/lib/password';
 import { detectThreat, sanitizeErrorMessage, safeTruncate } from '@/lib/threat-detector';
 import type { ThreatSeverity } from '@/lib/threat-detector';
 
@@ -127,12 +128,20 @@ export async function POST(req: Request) {
     let userRecord;
 
     if (secureMode) {
-      userRecord = await db.get(
-        'SELECT * FROM users WHERE username = ? AND password = ?',
-        [username, password]
+      // PRODUCTION: Parameterized query by username, then verify hash in code
+      // This is the correct pattern: never compare passwords in SQL
+      const candidate = await db.get(
+        'SELECT * FROM users WHERE username = ?',
+        [username]
       );
+      if (candidate && verifyPassword(password, candidate.password)) {
+        userRecord = candidate;
+      }
     } else {
-      // DEMO LAB ONLY — kept for educational demonstration
+      // DEMO LAB ONLY — kept for educational demonstration of SQL injection
+      // NOTE: Since DB stores hashed passwords, normal login won't work via this
+      // path. However, SQLi bypasses (e.g. ' OR '1'='1' --) still demonstrate
+      // the vulnerability by returning rows regardless of the password column.
       const query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
       try {
         userRecord = await db.get(query);
@@ -143,7 +152,9 @@ export async function POST(req: Request) {
 
     // Authentication decision — no information leakage about why login failed
     if (userRecord) {
-      const isSuccessfulBypass = userRecord.username === 'admin' && password !== 'admin123';
+      // In insecure mode, any returned row means the SQL was bypassed
+      // (normal login can't work since DB has hashed passwords)
+      const isSuccessfulBypass = !secureMode || (userRecord.username === 'admin' && !verifyPassword(password, userRecord.password));
 
       store.addLog({
         type: 'NORMAL',
@@ -161,11 +172,14 @@ export async function POST(req: Request) {
       });
       
       // Issue secure HttpOnly cookie for admin session
+      // Token value from env var — never hardcoded in source
       if (userRecord.username === 'admin' && !isSuccessfulBypass) {
-        response.cookies.set('admin_token', 'securelock_authorized', { 
+        const sessionToken = process.env.ADMIN_SESSION_TOKEN || 'securelock_dev_only';
+        response.cookies.set('admin_token', sessionToken, { 
           path: '/', 
           httpOnly: true, 
           secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
           maxAge: 60 * 60 * 24 // 24 hours
         });
       }

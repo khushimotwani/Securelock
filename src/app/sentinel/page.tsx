@@ -52,7 +52,7 @@ function ThreatMeter({ score }: { score: number }) {
   const r = 38;
   const cx = 50; const cy = 50;
   const totalArc = Math.PI * 1.5; // 270° sweep
-  const startAngle = Math.PI * 0.75; // starts bottom-left
+   const startAngle = Math.PI * 0.75; // starts bottom-left
   const arcLen = 2 * Math.PI * r;
   const dashArray = arcLen;
   const dashOffset = arcLen - (clamped / 100) * (totalArc / (2 * Math.PI)) * arcLen;
@@ -115,8 +115,19 @@ export default function Dashboard() {
   const seenLogTypes = useRef<Set<string>>(new Set());
   const seenAcvIds = useRef<Set<string>>(new Set());
 
+  // Auth check: call the middleware-protected /api/status endpoint.
+  // If the cookie is invalid/missing, middleware returns 401 and we show the gate.
+  // sessionStorage is NOT used — it can be forged by anyone in DevTools.
   useEffect(() => {
-    setIsAdmin(typeof window !== 'undefined' && sessionStorage.getItem('securelock-admin') === 'true');
+    fetch('/api/status')
+      .then(res => {
+        if (res.ok) {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
+      })
+      .catch(() => setIsAdmin(false));
   }, []);
 
   const fetchStatus = async () => {
@@ -342,7 +353,7 @@ export default function Dashboard() {
               </div>
               <div style={{ padding: '0.875rem', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
                 <span style={{ fontSize: '0.6rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                  <Cpu style={{ width: '9px', height: '9px' }} /> CPU Load
+                  <Cpu style={{ width: '9px', height: '9px' }} /> CPU Load <span style={{ opacity: 0.5, fontWeight: 400 }}>(simulated)</span>
                 </span>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1b3a5c', marginTop: '4px' }}>{cpuUsage}%</div>
                 <div style={{ width: '100%', background: '#e5e7eb', height: '4px', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
@@ -350,7 +361,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div style={{ padding: '0.875rem', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px' }}>
-                <span style={{ fontSize: '0.6rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>MEM Load</span>
+                <span style={{ fontSize: '0.6rem', color: '#6b7280', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>MEM Load <span style={{ opacity: 0.5, fontWeight: 400 }}>(simulated)</span></span>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1b3a5c', marginTop: '4px' }}>{memUsage}%</div>
                 <div style={{ width: '100%', background: '#e5e7eb', height: '4px', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
                   <div style={{ width: `${memUsage}%`, background: '#1b3a5c', height: '100%', transition: 'width 0.5s' }} />

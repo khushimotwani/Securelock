@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { store } from '@/lib/store';
-import { execFile } from 'child_process';
-import { exec } from 'child_process';
+import { execFile, exec } from 'child_process';
 import { promisify } from 'util';
 import { analyzePayload } from '@/lib/ai';
 import { detectThreat, sanitizeErrorMessage, safeTruncate } from '@/lib/threat-detector';

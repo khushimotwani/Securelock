@@ -1,5 +1,6 @@
 import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
+import { hashPassword } from './password';
 
 let dbPromise: Promise<Database<sqlite3.Database, sqlite3.Statement>> | null = null;
 
@@ -31,11 +32,13 @@ export async function getDb() {
       `);
       
       // Ensure admin exists with CTF flag (hidden in the DB for CTF challenge)
+      // Password is hashed using Node.js crypto.scrypt — never stored in plaintext
       const adminExists = await db.get('SELECT * FROM users WHERE username = ?', ['admin']);
       if (!adminExists) {
+        const hashedPwd = hashPassword('admin123');
         await db.run(
           'INSERT INTO users (username, password, flag) VALUES (?, ?, ?)',
-          ['admin', 'admin123', 'FLAG{s3cur3l0ck_SQLi_m4st3r}']
+          ['admin', hashedPwd, 'FLAG{s3cur3l0ck_SQLi_m4st3r}']
         );
       } else {
         // Add flag column to existing admin if missing
@@ -46,6 +49,13 @@ export async function getDb() {
           'FLAG{s3cur3l0ck_SQLi_m4st3r}',
           'admin',
         ]);
+
+        // Migrate plaintext password to hashed if not already hashed
+        // Hashed passwords contain a ':' separating salt and hash
+        if (adminExists.password && !adminExists.password.includes(':')) {
+          const hashedPwd = hashPassword(adminExists.password);
+          await db.run('UPDATE users SET password = ? WHERE username = ?', [hashedPwd, 'admin']);
+        }
       }
       return db;
     });
