@@ -18,7 +18,7 @@ async function request(path, payload = null, method = 'POST', headers = {}) {
   const start = Date.now();
   const res = await globalThis.fetch(baseUrl + path, {
     method,
-    headers: { 'Content-Type': 'application/json', ...headers },
+    headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (TestBench)', ...headers },
     body: payload ? JSON.stringify(payload) : undefined,
     redirect: 'manual' // crucial for testing 302 redirects
   });

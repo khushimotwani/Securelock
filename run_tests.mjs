@@ -3,7 +3,7 @@ const baseUrl = 'http://localhost:3000';
 async function fetchAndLog(url, method, body) {
   const res = await globalThis.fetch(baseUrl + url, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (TestBench)' },
     body: body ? JSON.stringify(body) : undefined
   });
   const text = await res.text();

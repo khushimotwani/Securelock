@@ -8,7 +8,7 @@
 
 ## Overview
 
-SecureLockTS is a TypeScript web application built with Next.js that demonstrates how proactive, built-in security mechanisms can detect and respond to cyberattacks in real time. The application intentionally includes controlled vulnerabilities (SQL Injection, OS Command Injection, and Cross-Site Scripting) alongside an AI-powered Sentinel detection engine that monitors input patterns and automatically locks down the system when attack thresholds are breached.
+SecureLockTS is a TypeScript web application built with Next.js that demonstrates how proactive, built-in security mechanisms can detect and respond to cyberattacks in real time. The application is styled as a decoy frontend—**"God Bless America — A Patriot's Blog"**—but underneath, it intentionally includes controlled vulnerabilities alongside an AI-powered Sentinel detection engine. The system monitors input patterns and automatically locks down when attack thresholds are breached.
 
 ## Architecture
 
@@ -26,11 +26,12 @@ SecureLockTS is a TypeScript web application built with Next.js that demonstrate
 
 | # | Vulnerability | CWE | Endpoint | Description |
 |---|---|---|---|---|
-| 1 | **SQL Injection** | CWE-89 | `/api/auth` | User input is concatenated directly into SQL queries when `secureMode` is off |
+| 1 | **SQL Injection** | CWE-89 | `/api/auth`, `/api/ctf` | User input is concatenated directly into SQL queries when `secureMode` is off |
 | 2 | **OS Command Injection** | CWE-78 | `/api/command` | User input is passed directly to `child_process.exec()` when `secureMode` is off |
 | 3 | **Reflected XSS** | CWE-79 | `/api/xss` | User-supplied HTML is returned unescaped when `secureMode` is off |
+| 4 | **Path Traversal** | CWE-22 | `/blog/[slug]` | Application resolves user-provided paths allowing for unauthorized filesystem access |
 
-Each vulnerability has a **secure mode** toggle that demonstrates the proper remediation (parameterized queries, input validation, HTML escaping).
+Each vulnerability has a **secure mode** toggle that demonstrates the proper remediation (parameterized queries, input validation, canonicalization, HTML escaping).
 
 ## Defensive Mechanisms
 
@@ -47,10 +48,13 @@ Each vulnerability has a **secure mode** toggle that demonstrates the proper rem
 
 | Route | Description |
 |---|---|
-| `/` | Corporate dashboard (decoy frontend) |
-| `/login` | Authentication page — test SQL injection here |
-| `/test-injection` | Command execution terminal — test OS command injection here |
-| `/xss-test` | XSS lab — test reflected cross-site scripting here |
+| `/` | **A Patriot's Blog** (Decoy corporate/blog frontend) |
+| `/blog/[slug]` | Individual blog articles — Test Path Traversal here |
+| `/ctf` | **Capture the Flag** — Interactive SQL Injection challenge to retrieve the flag |
+| `/vulnlab` | **Vulnerability Lab** — Side-by-side comparison of secure vs vulnerable code |
+| `/login` | Authentication page — Test SQL injection here |
+| `/test-injection` | Command execution terminal — Test OS command injection here |
+| `/xss-test` | XSS lab — Test reflected cross-site scripting here |
 | `/sentinel` | Real-time security monitoring dashboard with live syslog feed |
 
 ## Getting Started
@@ -113,6 +117,12 @@ npm run lint
 # Generate JSON report
 npx eslint src/ --format json -o eslint-report.json
 ```
+
+## Troubleshooting
+
+- **Port 3000 in use**: If you encounter an error stating `Port 3000 is in use` or `Unable to acquire lock`, you can terminate the existing process using `kill -9 $(lsof -t -i:3000)` and run `npm run dev` again.
+- **Middleware Warning**: You might see a warning about the `middleware` file convention being deprecated in Next.js 16. This does not affect the core application functionality.
+- **Dependencies Missing**: If you get errors related to missing modules like `tailwindcss` or `lucide-react`, ensure you have run `npm install` directly in the project root.
 
 ## Static Analysis Tools
 
