@@ -2,13 +2,18 @@
 
 **A Self-Lockdown Application for Real-Time Attack Detection and Automated System Protection**
 
-*Khushi, Taiba, Heer*
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![Security](https://img.shields.io/badge/Security-Strict-red?style=for-the-badge)
+![AI Powered](https://img.shields.io/badge/AI_Powered-Gemini-blue?style=for-the-badge)
 
 ---
 
 ## Overview
 
-SecureLockTS is a TypeScript web application built with Next.js that demonstrates how proactive, built-in security mechanisms can detect and respond to cyberattacks in real time. The application is styled as a decoy frontend - **"God Bless America - A Patriot's Blog"** - but underneath, it intentionally includes controlled vulnerabilities alongside an AI-powered Sentinel detection engine. The system monitors input patterns and automatically locks down when attack thresholds are breached.
+SecureLockTS is an advanced TypeScript web application built with Next.js that demonstrates how proactive, built-in security mechanisms can detect, analyze, and autonomously respond to cyberattacks in real time. 
+
+Styled as a decoy corporate frontend - **"God Bless America - A Patriot's Blog"** - the application intentionally includes a controlled vulnerability testing environment. Under the hood, an AI-powered Sentinel engine monitors all incoming traffic, identifies malicious payloads, and automatically locks down the system when predefined threat thresholds are breached.
 
 ## Architecture
 
