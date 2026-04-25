@@ -8,7 +8,7 @@
 
 ## Overview
 
-SecureLockTS is a TypeScript web application built with Next.js that demonstrates how proactive, built-in security mechanisms can detect and respond to cyberattacks in real time. The application is styled as a decoy frontend—**"God Bless America — A Patriot's Blog"**—but underneath, it intentionally includes controlled vulnerabilities alongside an AI-powered Sentinel detection engine. The system monitors input patterns and automatically locks down when attack thresholds are breached.
+SecureLockTS is a TypeScript web application built with Next.js that demonstrates how proactive, built-in security mechanisms can detect and respond to cyberattacks in real time. The application is styled as a decoy frontend - **"God Bless America - A Patriot's Blog"** - but underneath, it intentionally includes controlled vulnerabilities alongside an AI-powered Sentinel detection engine. The system monitors input patterns and automatically locks down when attack thresholds are breached.
 
 ## Architecture
 
@@ -35,26 +35,27 @@ Each vulnerability has a **secure mode** toggle that demonstrates the proper rem
 
 ## Defensive Mechanisms
 
-- **Sentinel AI Engine** — LLM-powered payload analysis via Google Gemini with automatic regex fallback when API is unavailable
-- **WAF Middleware** — HTTP verb filtering, URL encoding validation, payload size constraints
-- **Rate Limiting** — Sliding-window IP-based rate limiter (15 req/10s) to prevent brute-force and DDoS
-- **Automatic Lockdown** — After 3 anomalies, all API endpoints return `403 Forbidden`
-- **Tarpit Defense** — Malicious requests are artificially delayed by 5 seconds to exhaust attacker resources
-- **IP Banning & Rickroll Redirect** — Banned IPs are redirected to a YouTube rickroll
-- **Honeypot Endpoint** — `/api/admin/dump` streams infinite junk JSON to crash attacker tools
-- **Security Headers** — CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+- **Sentinel AI Engine** - LLM-powered payload analysis via Google Gemini with automatic regex fallback when API is unavailable
+- **WAF Middleware** - HTTP verb filtering, URL encoding validation, payload size constraints
+- **Browser Fingerprinting** - Client-side script generates unique device hashes to track and permanently ban malicious hardware regardless of IP changes or VPN usage
+- **Rate Limiting** - Sliding-window IP-based rate limiter (15 req/10s) to prevent brute-force and DDoS
+- **Automatic Lockdown** - After 3 anomalies, all API endpoints return `403 Forbidden`
+- **Tarpit Defense** - Malicious requests are artificially delayed by 5 seconds to exhaust attacker resources
+- **IP Banning & Rickroll Redirect** - Banned IPs are redirected to a YouTube rickroll
+- **Honeypot Endpoint** - `/api/admin/dump` streams infinite junk JSON to crash attacker tools
+- **Security Headers** - CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
 
 ## Pages
 
 | Route | Description |
 |---|---|
 | `/` | **A Patriot's Blog** (Decoy corporate/blog frontend) |
-| `/blog/[slug]` | Individual blog articles — Test Path Traversal here |
-| `/ctf` | **Capture the Flag** — Interactive SQL Injection challenge to retrieve the flag |
-| `/vulnlab` | **Vulnerability Lab** — Side-by-side comparison of secure vs vulnerable code |
-| `/login` | Authentication page — Test SQL injection here |
-| `/test-injection` | Command execution terminal — Test OS command injection here |
-| `/xss-test` | XSS lab — Test reflected cross-site scripting here |
+| `/blog/[slug]` | Individual blog articles - Test Path Traversal here |
+| `/ctf` | **Capture the Flag** - Interactive SQL Injection challenge to retrieve the flag |
+| `/vulnlab` | **Vulnerability Lab** - Side-by-side comparison of secure vs vulnerable code |
+| `/login` | Authentication page - Test SQL injection here |
+| `/test-injection` | Command execution terminal - Test OS command injection here |
+| `/xss-test` | XSS lab - Test reflected cross-site scripting here |
 | `/sentinel` | Real-time security monitoring dashboard with live syslog feed |
 
 ## Getting Started
@@ -88,7 +89,7 @@ Create a `.env.local` file in the project root:
 # Required for AI-powered threat detection
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# Admin session token — change to a strong random secret in production
+# Admin session token - change to a strong random secret in production
 # Generate one with: openssl rand -base64 32
 ADMIN_SESSION_TOKEN=your_secret_token_here
 ```
@@ -126,9 +127,9 @@ npx eslint src/ --format json -o eslint-report.json
 
 ## Static Analysis Tools
 
-- **ESLint + `eslint-plugin-security`** — Detects unsafe regex, `eval()` usage, non-literal `exec()` calls, and other security anti-patterns
-- **TypeScript Strict Mode** — Enforces strict type checking, eliminating `any` type leaks and ensuring safe error handling
-- **SonarQube** (configured via `sonar-project.properties`) — Advanced SAST including taint analysis for injection tracking
+- **ESLint + `eslint-plugin-security`** - Detects unsafe regex, `eval()` usage, non-literal `exec()` calls, and other security anti-patterns
+- **TypeScript Strict Mode** - Enforces strict type checking, eliminating `any` type leaks and ensuring safe error handling
+- **SonarQube** (configured via `sonar-project.properties`) - Advanced SAST including taint analysis for injection tracking
 
 ## References
 

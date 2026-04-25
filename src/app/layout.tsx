@@ -5,7 +5,7 @@ import "./globals.css";
 import Navigation from "@/components/Navigation";
 import LockdownOverlay from "@/components/LockdownOverlay";
 
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { store } from "@/lib/store";
 
 const geistMono = Geist_Mono({
@@ -24,9 +24,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const headersList = await headers();
+  const cookiesList = await cookies();
   const ip = headersList.get('x-forwarded-for') || '127.0.0.1';
+  const deviceId = cookiesList.get('sl_device_id')?.value;
   
-  if (store.isBlocked(ip) === 'banned') {
+  if (store.isBlocked(ip, deviceId) === 'banned') {
     return (
       <html lang="en">
         <head>
@@ -48,6 +50,13 @@ export default async function RootLayout({
     <html lang="en">
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            if (document.cookie.includes('sl_device_id=')) return;
+            var fp = btoa(navigator.userAgent + screen.colorDepth + new Date().getTimezoneOffset() + navigator.language).substring(0, 32);
+            document.cookie = 'sl_device_id=' + fp + '; path=/; max-age=31536000; SameSite=Strict';
+          })();
+        ` }} />
       </head>
       <body
         suppressHydrationWarning

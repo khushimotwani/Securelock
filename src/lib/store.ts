@@ -49,6 +49,7 @@ type StoreState = {
   distinctAttackerIPs: string[];   // IPs that attacked in the current window
   ddosWindowStart: number | null;  // When the DDoS detection window started
   achievements: Achievement[];     // Unlocked achievements
+  bannedDeviceIds: string[];       // Browser Fingerprints that are permanently banned
 };
 
 const DB_PATH = path.join(process.cwd(), '.securelock-db.json');
@@ -75,7 +76,7 @@ function defaultState(): StoreState {
     logs: [], globalFailCount: 0, isGlobalLockdown: false, isSentinelActive: true,
     rateLimitTracker: {}, ipReputation: {}, globalLockdownTimestamp: null,
     totalAttacksBlocked: 0, healCount: 0, distinctAttackerIPs: [], ddosWindowStart: null,
-    achievements: [],
+    achievements: [], bannedDeviceIds: [],
   };
 }
 
@@ -169,11 +170,12 @@ class SecurityStore {
   }
 
   // -----------------------------------------------------------------------
-  // PER-IP REPUTATION & BANNING
+  // PER-IP & BROWSER FINGERPRINT REPUTATION & BANNING
   // -----------------------------------------------------------------------
-  updateReputation(ip: string, malicious: boolean): number {
+  updateReputation(ip: string, malicious: boolean, deviceId?: string): number {
     const state = this.ensureLoaded();
     if (!state.ipReputation) state.ipReputation = {};
+    if (!state.bannedDeviceIds) state.bannedDeviceIds = [];
 
     const now = Date.now();
     if (!state.ipReputation[ip]) {
@@ -192,10 +194,16 @@ class SecurityStore {
       if (rep.attacks >= IP_BAN_THRESHOLD && !rep.banned) {
         rep.banned = true;
         rep.bannedAt = now;
+        
+        // Also ban the browser fingerprint if available
+        if (deviceId && !state.bannedDeviceIds.includes(deviceId)) {
+          state.bannedDeviceIds.push(deviceId);
+        }
+
         state.logs.unshift({
           id: crypto.randomUUID(),
           type: 'IP_BANNED',
-          message: `IP [${ip}] permanently banned after ${rep.attacks} attacks. Other users unaffected.`,
+          message: `IP [${ip}] permanently banned after ${rep.attacks} attacks. Device fingerprint recorded.`,
           timestamp: new Date().toISOString(),
           ip,
           userAgent: 'Per-IP Isolation Engine',
@@ -224,9 +232,11 @@ class SecurityStore {
     return this.state.isGlobalLockdown;
   }
 
-  /** Combined check: is this IP blocked? (either per-IP ban OR global lockdown) */
-  isBlocked(ip: string): 'banned' | 'lockdown' | false {
+  /** Combined check: is this IP or Device blocked? */
+  isBlocked(ip: string, deviceId?: string): 'banned' | 'lockdown' | false {
+    const state = this.ensureLoaded();
     if (this.isBanned(ip)) return 'banned';
+    if (deviceId && state.bannedDeviceIds?.includes(deviceId)) return 'banned';
     if (this.isGloballyLockedDown()) return 'lockdown';
     return false;
   }

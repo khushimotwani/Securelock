@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { store } from '@/lib/store';
 import { getDb } from '@/lib/db';
 import { analyzePayload } from '@/lib/ai';
@@ -20,9 +21,11 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(req: Request) {
   const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+  const cookiesList = await cookies();
+  const deviceId = cookiesList.get('sl_device_id')?.value;
 
   // Layer 0: Per-IP isolation + DDoS global lockdown
-  const blocked = store.isBlocked(ip);
+  const blocked = store.isBlocked(ip, deviceId);
   if (blocked === 'banned') {
     return NextResponse.redirect('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 302);
   }
@@ -87,7 +90,7 @@ export async function POST(req: Request) {
         userAgent: safeTruncate(userAgent, 80),
         severity: sev,
       });
-      store.updateReputation(ip, true);
+      store.updateReputation(ip, true, deviceId);
 
       // Tarpit: exhaust attacker's connection pool
       await new Promise(resolve => setTimeout(resolve, 5000));
@@ -113,7 +116,7 @@ export async function POST(req: Request) {
           userAgent: safeTruncate(userAgent, 80),
           aiReasoning: evaluation.reasoning,
         });
-        store.updateReputation(ip, true);
+        store.updateReputation(ip, true, deviceId);
         await new Promise(resolve => setTimeout(resolve, 5000));
 
         return NextResponse.json(
@@ -164,7 +167,7 @@ export async function POST(req: Request) {
         ip,
         userAgent: safeTruncate(userAgent, 80),
       });
-      store.updateReputation(ip, false);
+      store.updateReputation(ip, false, deviceId);
 
       const response = NextResponse.json({
         success: true,
