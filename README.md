@@ -5,7 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
 ![Security](https://img.shields.io/badge/Security-Strict-red?style=for-the-badge)
-![AI Powered](https://img.shields.io/badge/AI_Powered-Gemini-blue?style=for-the-badge)
+![AI Powered](https://img.shields.io/badge/AI_Powered-Claude_Haiku_4.5-blue?style=for-the-badge)
 
 ---
 
@@ -21,7 +21,7 @@ Styled as a decoy corporate frontend - **"God Bless America - A Patriot's Blog"*
 |---|---|---|
 | **Framework** | Next.js 16 + TypeScript (strict mode) | Full-stack web application with API routes |
 | **Database** | SQLite (via `sqlite3`) | Stores user credentials (scrypt-hashed passwords) for auth demo |
-| **AI Detection** | Google Gemini API (`gemini-2.5-flash`) | Analyzes payloads for malicious intent in real time |
+| **AI Detection** | Anthropic Claude API (`claude-haiku-4-5`) | Analyzes payloads for malicious intent in real time |
 | **State Management** | In-memory cache + async JSON persistence | Tracks logs, anomaly count, lockdown state, rate limits, and IP bans |
 | **Password Hashing** | Node.js `crypto.scrypt` | OWASP-recommended KDF with random salt and timing-safe comparison |
 | **Static Analysis** | ESLint + `eslint-plugin-security`, TypeScript strict mode | Identifies unsafe coding patterns at build time |
@@ -40,7 +40,7 @@ Each vulnerability has a **secure mode** toggle that demonstrates the proper rem
 
 ## Defensive Mechanisms
 
-- **Sentinel AI Engine** - LLM-powered payload analysis via Google Gemini with automatic regex fallback when API is unavailable
+- **Sentinel AI Engine** - LLM-powered payload analysis via Anthropic Claude (Haiku 4.5) with automatic regex fallback when API is unavailable
 - **WAF Middleware** - HTTP verb filtering, URL encoding validation, payload size constraints
 - **Browser Fingerprinting** - Client-side script generates unique device hashes to track and permanently ban malicious hardware regardless of IP changes or VPN usage
 - **Rate Limiting** - Sliding-window IP-based rate limiter (15 req/10s) to prevent brute-force and DDoS
@@ -67,7 +67,7 @@ Each vulnerability has a **secure mode** toggle that demonstrates the proper rem
 
 ### Prerequisites
 - Node.js 18+ or Bun
-- (Optional) A Google Gemini API key for AI-powered detection
+- (Optional) An Anthropic API key for AI-powered detection
 
 ### Installation
 
@@ -92,7 +92,7 @@ Create a `.env.local` file in the project root:
 
 ```bash
 # Required for AI-powered threat detection
-GEMINI_API_KEY=your_gemini_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
 
 # Admin session token - change to a strong random secret in production
 # Generate one with: openssl rand -base64 32
