@@ -1,28 +1,32 @@
-import { GoogleGenerativeAI, Schema, SchemaType } from "@google/generative-ai";
+import Anthropic from "@anthropic-ai/sdk";
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.ANTHROPIC_API_KEY;
 
 // Only initialize if we have a key
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+const anthropic = apiKey ? new Anthropic({ apiKey }) : null;
 
-// The schema ensures Gemini returns precisely parsable JSON without markdown wrapping.
-const responseSchema: Schema = {
-  type: SchemaType.OBJECT,
-  properties: {
-    isMalicious: {
-      type: SchemaType.BOOLEAN,
-      description: "True if the payload indicates an exploit attempt (XSS, SQLi, Command Injection, etc).",
+// The schema ensures Claude returns precisely parsable JSON
+const tool: Anthropic.Tool = {
+  name: "report_analysis",
+  description: "Report the results of the payload analysis.",
+  input_schema: {
+    type: "object",
+    properties: {
+      isMalicious: {
+        type: "boolean",
+        description: "True if the payload indicates an exploit attempt (XSS, SQLi, Command Injection, etc).",
+      },
+      confidence: {
+        type: "number",
+        description: "Confidence percentage (0-100) of this assessment.",
+      },
+      reasoning: {
+        type: "string",
+        description: "A short, 1-2 sentence technical explanation for why this payload is blocked or allowed.",
+      },
     },
-    confidence: {
-      type: SchemaType.NUMBER,
-      description: "Confidence percentage (0-100) of this assessment.",
-    },
-    reasoning: {
-      type: SchemaType.STRING,
-      description: "A short, 1-2 sentence technical explanation for why this payload is blocked or allowed.",
-    },
+    required: ["isMalicious", "confidence", "reasoning"],
   },
-  required: ["isMalicious", "confidence", "reasoning"],
 };
 
 export type AIAnalysisResult = {
@@ -32,23 +36,11 @@ export type AIAnalysisResult = {
 };
 
 export async function analyzePayload(payload: string, context: string): Promise<AIAnalysisResult> {
-  // ---------------------------------------------------------------------------------
-  // 1. CONSERVATIVE AI PRE-FILTERING (Save API Quota/Money)
-  // ---------------------------------------------------------------------------------
-  // If the payload is completely devoid of execution metacharacters (only alphanumeric + basic punctuation),
-  // there is mathematically zero chance of injection. Return benign instantly without calling the LLM.
-  const isSuperSafe = /^[a-zA-Z0-9\s.\-_@]+$/.test(payload);
-  if (isSuperSafe) {
-    return {
-      isMalicious: false,
-      confidence: 100,
-      reasoning: "Static WAF Pre-filter: Input contains zero executable metacharacters. Bypassed AI inference to conserve API quota.",
-    };
-  }
+  // Removed static pre-filter to ensure active AI detection blocking on all payloads
 
   // Graceful fail-closed or fail-open if the API key is missing. 
-  if (!genAI) {
-    console.warn("No GEMINI_API_KEY found. Bypassing AI analysis (Fail-Open fallback).");
+  if (!anthropic) {
+    console.warn("No ANTHROPIC_API_KEY found. Bypassing AI analysis (Fail-Open fallback).");
     const isSuspicious = /[;&|`$\\]|(' OR '1)/i.test(payload);
     return {
       isMalicious: isSuspicious,
@@ -58,8 +50,6 @@ export async function analyzePayload(payload: string, context: string): Promise<
   }
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    
     const prompt = `
 Context of Input: ${context}
 Raw Payload: """${payload}"""
@@ -67,34 +57,20 @@ Raw Payload: """${payload}"""
 Analyze the payload and determine if it contains malicious exploit signatures based on the context.
 `;
 
-    const requestBody = {
-      systemInstruction: {
-        parts: [{ text: "You are The Securelock AI Sentinel WAF. Your job is to analyze incoming network payloads from untrusted clients. Evaluate the input strictly for malicious intent like SQL Injection, Command Injection, XSS, or Directory Traversal. Do not be fooled by obfuscation. You must output JSON matching the required schema." }]
-      },
-      contents: [
-        { parts: [{ text: prompt }] }
-      ],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: responseSchema
-      }
-    };
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody)
+    const msg = await anthropic.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 300,
+      system: "You are The Securelock AI Sentinel WAF. Your job is to analyze incoming network payloads from untrusted clients. Evaluate the input strictly for malicious intent like SQL Injection, Command Injection, XSS, or Directory Traversal. Do not be fooled by obfuscation.",
+      tools: [tool],
+      tool_choice: { type: "tool", name: "report_analysis" },
+      messages: [{ role: "user", content: prompt }]
     });
 
-    if (!response.ok) {
-        throw new Error(`API generated an HTTP error: ${response.status} ${response.statusText}`);
+    const toolUse = msg.content.find((block) => block.type === "tool_use");
+    if (!toolUse || toolUse.type !== "tool_use") {
+        throw new Error("Claude did not return tool use block");
     }
-
-    const result = await response.json();
-    const jsonStr = result.candidates[0].content.parts[0].text;
-    const data = JSON.parse(jsonStr) as AIAnalysisResult;
-    
-    return data;
+    return toolUse.input as AIAnalysisResult;
   } catch (err: unknown) {
     const errMessage = err instanceof Error ? err.message : String(err);
     console.error("AI Analysis failed. Activating Manual Fallback:", errMessage);

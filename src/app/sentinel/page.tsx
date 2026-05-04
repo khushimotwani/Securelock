@@ -460,7 +460,7 @@ export default function Dashboard() {
                       <div style={{ marginTop: '10px', padding: '10px 14px', background: 'linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%)', border: '1px solid #bfdbfe', borderRadius: '8px', position: 'relative' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                           <span style={{ fontSize: '0.85rem' }}>🧠</span>
-                          <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#1e40af', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Gemini AI Analysis</span>
+                          <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#1e40af', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Claude AI Analysis</span>
                           {log.severity && (
                             <span style={{
                               marginLeft: 'auto', fontSize: '0.55rem', fontWeight: 700,
