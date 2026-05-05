@@ -199,17 +199,15 @@ sequenceDiagram
 
 ## 🎮 Capture The Flag
 
-SecureLock includes a built-in **CTF challenge**. There's a secret flag hidden in the database:
+SecureLock includes a built-in **CTF challenge**. There's a secret flag hidden somewhere in the database, and your job is to find it.
 
-```
-FLAG{s3cur3l0ck_SQLi_m4st3r}
-```
+**How to play:**
+1. Go to `/ctf` for hints
+2. Explore the login page's **Insecure Mode** toggle
+3. Think about what SQL injection can reveal beyond just logging in...
+4. Found it? Submit your flag at `/ctf`
 
-**How to find it:**
-1. Go to `/login` → switch to **Insecure Mode**
-2. In Insecure Mode, the SQL query is vulnerable: `SELECT * FROM users WHERE username = '${input}'`
-3. Use SQL injection to bypass auth → the response includes the hidden `flag` column
-4. Submit it at `/ctf` → achievement unlocked! 🚩
+> No spoilers here. You'll have to hack it yourself. 😉
 
 ---
 
