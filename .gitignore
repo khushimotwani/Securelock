@@ -56,10 +56,16 @@ status.json
 sonar-project*.properties
 !sonar-project.properties
 
-# dev/test scripts at project root
+# dev/test scripts and generated reports
 test_attacks.js
 run_rate_limit_test.mjs
 run_tests.mjs
 test_bench.mjs
 read_pdf.js
 index.ts
+eslint-report.json
+lint-results.txt
+components.json
+bun.lock
+mid-project-report.html
+vulnerability-report.md
