@@ -41,11 +41,20 @@ yarn-error.log*
 next-env.d.ts
 
 # securelock runtime state & DB (not for version control)
-.securelock-db.json
+.securelock-db*.json
 status.json
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+# large media files
+*.mp4
+*.webm
+*.avi
+
+# duplicate/temp config files
+sonar-project*.properties
+!sonar-project.properties
 
 # dev/test scripts at project root
 test_attacks.js
